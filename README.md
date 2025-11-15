@@ -45,6 +45,8 @@ This tool helps patients and families quickly understand medical terms, lab valu
 - Error-handling and clean formatting
 
 ---
+### Input
+
 
 ## 📂 Folder Structure  
 SwasthyaSaar/
@@ -84,3 +86,13 @@ Then add to PATH.
 
 4️⃣ Run the application
 streamlit run main.py
+
+
+🛠 Tech Stack
+Component	Technology
+Frontend UI	Streamlit
+OCR	Tesseract + pytesseract
+NLP	Python, regex, RapidFuzz
+Translation	googletrans
+Dataset	Custom CSV
+Optional Model	Fine-tuned summarizer (HuggingFace-compatible)
