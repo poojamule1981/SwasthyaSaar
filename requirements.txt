@@ -1,0 +1,29 @@
+# OCR / PDF
+pytesseract==0.3.10
+pdf2image==1.16.3
+PyMuPDF==1.24.3
+opencv-python==4.8.1.78
+Pillow==9.5.0 
+
+# NLP
+regex==2024.9.11
+nltk==3.8.1
+spacy==3.7.5
+sentencepiece==0.1.99
+
+# Transformers / Models
+transformers==4.35.0
+torch==2.2.1
+safetensors==0.6.2
+
+# Streamlit UI
+streamlit==1.26.0
+
+# Utilities
+pandas==2.2.2
+python-multipart==0.0.6
+tqdm==4.66.1
+rapidfuzz==2.15.1
+
+# Optional translation (phase 2)
+googletrans==4.0.0-rc1
