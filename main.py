@@ -86,6 +86,15 @@ def load_glossary():
             val = str(row[simple_col]).strip() if simple_col else ""
             if key:
                 glossary[key] = val
+                # Also add indexed keys: if term is "Hemoglobin (Hb or Hgb)", add "hb" and "hgb" as keys too
+                # Extract acronyms from parentheses and add them
+                paren_match = re.search(r'\(([^)]+)\)', key)
+                if paren_match:
+                    inner = paren_match.group(1).strip()
+                    for token in re.split(r'\s+or\s+|\s+/\s+|,', inner):
+                        token = token.strip().lower()
+                        if token and len(token) > 0:
+                            glossary[token] = val
     except Exception as e:
         st.warning(f"Failed to load glossary: {e}")
     return glossary
@@ -191,21 +200,37 @@ def _sanitize_meaning(text):
     Clean a meaning string:
      - unescape HTML entities
      - remove newlines / excessive whitespace
-     - reject extremely long or clearly model-like strings
+     - keep first sentence only
+     - reject clearly model-like, translation, or observation text
     """
     if not text:
         return ""
     s = html.unescape(str(text)).strip()
     s = re.sub(r"\s+", " ", s)
-    # If the string looks like a long paragraph (likely noisy) or contains 'gpt' / 'ai' tokens, reject
-    if len(s) > 160 or re.search(r"\bgpt\b|\bchatgpt\b|\bmodel\b|\btranslate\b", s, re.I):
-        return ""
-    # remove suspicious fragments like 'ISS and accuchecks' that are not definitional — heuristic:
-    if re.search(r"(plan to|accuchecks|contact us|please consult|A1c dietary)", s, re.I):
-        return ""
-    # Ensure it is short — keep first sentence
+    
+    # Keep only first sentence early
     if "." in s:
         s = s.split(".")[0].strip() + "."
+
+    # Reject obvious LLM/translation/example artifacts
+    if re.search(r"\bgpt\b|\bchatgpt\b|\bmodel\b|\btranslate\b", s, re.I):
+        return ""
+
+    # Reject observation/report-like fragments
+    if re.search(r"(patient|report|shows?|example|sample|value(?:s)?|count at|observed|his|her|with\s+\w+\s+and)", s, re.I):
+        return ""
+
+    # Reject if it contains digits (likely a specific observation, not a definition)
+    if re.search(r"\d", s):
+        return ""
+
+    # Reject very long strings unless they contain clear definition keywords
+    if len(s) > 250 and not re.search(
+        r"(measure|measures|average|concentration|protein|found in|amount of|transport|oxygen|blood|indicates|is an|refers to|type of)",
+        s, re.I
+    ):
+        return ""
+
     return s
 
 
@@ -276,31 +301,53 @@ def build_param_metadata():
         if not candidate and syns:
             candidate = syns[0]
 
-        # 1) Prefer glossary_map (trusted CSV)
-        if candidate and candidate.lower() in glossary_map:
-            meaning = _sanitize_meaning(glossary_map[candidate.lower()])
-            full_form = candidate
-        if not meaning and p.lower() in glossary_map:
-            meaning = _sanitize_meaning(glossary_map[p.lower()])
-            if not full_form:
-                full_form = p
+        # 1) Prefer glossary_map (trusted CSV) — try multiple key formats
+        candidates_to_try = [p] + (info.get("synonyms", []) or [])
+        
+        for candidate in candidates_to_try:
+            candidate_lower = candidate.lower()
+            # Try exact match
+            if candidate_lower in glossary_map:
+                meaning = _sanitize_meaning(glossary_map[candidate_lower])
+                if meaning:
+                    full_form = candidate
+                    break
+            
+            # Try fuzzy match: check if candidate appears at start of any glossary key
+            for gkey, gval in glossary_map.items():
+                if gkey.startswith(candidate_lower) or candidate_lower in gkey:
+                    meaning = _sanitize_meaning(gval)
+                    if meaning:
+                        full_form = candidate
+                        break
+            if meaning:
+                break
 
         # 2) Only use readme_map as a last resort and only if short & clean
         if not meaning:
-            key = (candidate or p).lower()
-            raw = readme_map.get(key, "")
-            candidate_meaning = _sanitize_meaning(raw)
-            if candidate_meaning:
-                meaning = candidate_meaning
-                if not full_form:
-                    full_form = candidate or p
+            for candidate in candidates_to_try:
+                candidate_lower = candidate.lower()
+                raw = readme_map.get(candidate_lower, "")
+                if not raw:
+                    # Try fuzzy match in readme too
+                    for rkey, rval in readme_map.items():
+                        if rkey.startswith(candidate_lower) or candidate_lower in rkey:
+                            raw = rval
+                            break
+                if raw:
+                    candidate_meaning = _sanitize_meaning(raw)
+                    if candidate_meaning:
+                        meaning = candidate_meaning
+                        if not full_form:
+                            full_form = candidate
+                        break
 
         # 3) final safe fallbacks
         if not full_form:
             full_form = p.upper()
         if not meaning:
-            # Use a short generic template instead of long junk
-            meaning = f"{full_form} is a routine medical parameter; consult your clinician for details."
+            # If no definition available, leave meaning empty (handled downstream) to avoid incorrect auto-definitions
+            meaning = ""
 
         meta[p] = {"full_form": full_form, "meaning": meaning}
     return meta
@@ -510,9 +557,9 @@ def build_patient_markdown(results):
     blocks = []
     for r in results:
         p = r["parameter"]
-        meta = param_meta.get(p, {"full_form": p.upper(), "meaning": f"{p.upper()} is a routine medical test."})
+        meta = param_meta.get(p, {"full_form": p.upper(), "meaning": ""})
         full = meta["full_form"]
-        meaning = meta["meaning"]
+        meaning = meta["meaning"] or "Meaning not available in dataset; consult your clinician."
         emoji = STATUS_EMOJI.get(r["status"], "ℹ️")
         value = r["value"]
         unit = r.get("unit", "")
@@ -675,3 +722,7 @@ if uploaded_file:
 
 st.markdown("<hr>", unsafe_allow_html=True)
 st.caption("Empowering Patients with Clear, Multilingual, and Personalized Health Insights.")
+
+###to run the command
+
+####streamlit run main.py
