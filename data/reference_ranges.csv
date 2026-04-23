@@ -1,0 +1,285 @@
+parameter,low,high,unit,synonyms
+# Hematology
+hemoglobin,12,16,g/dL,hb;haemoglobin;hgb
+hematocrit,36,46,%,pcv;haematocrit;pcv(haematocrit)
+wbc count,4000,11000,/µL,white blood cells;wbccount;wbc;total wbc count;total leucocyte count;tlc;total wbc
+platelet count,1.5,4.5,lakhs/cumm,platelets;plateletcount;plt;platelet
+rbc count,4.5,6.0,mill/µL,red blood cells;rbccount;rbc;total rbc count
+mcv,80,100,fL,mean corpuscular volume
+mch,27,32,pg,mean corpuscular hemoglobin
+mchc,32,36,g/dL,mean corpuscular hemoglobin concentration
+neutrophils,35,70,%,neutrophil;neutrophil count;polymorphs;polymorph
+lymphocytes,20,40,%,lymphocyte;lymphocyte count
+eosinophils,1,8,%,eosinophil;eosinophil count
+monocytes,2,10,%,monocyte;monocyte count
+basophils,0,1,%,basophil;basophil count
+esr,0,20,mm/hr,erythrocyte sedimentation rate
+crp,0,5,mg/L,c-reactive protein
+reticulocyte count,0.5,1.5,%,retic count
+rdw,11.5,14.5,%,red cell distribution width
+mpv,7.5,11.5,fL,mean platelet volume
+pct,0.15,0.4,%,plateletcrit
+pdw,10,17.9,%,platelet distribution width
+absolute neutrophil count,2000,7000,/µL,anc
+absolute lymphocyte count,1000,3000,/µL,alc
+absolute eosinophil count,40,440,/µL,aec
+absolute monocyte count,200,800,/µL,amc
+peripheral smear,0,1,presence,blood smear;ps
+
+# Urine Examination
+albumin (urine),0,1,trace,urine albumin;urine protein;protein
+sugar (urine),0,1,trace,urine glucose;urine sugar;sugar
+rbc (urine),0,1,/hpf,red blood cells;urine rbc
+pus cells,0,5,/hpf,wbc (urine);wbc
+epithelial cells,0,5,/hpf,
+casts,0,1,presence,
+crystals,0,1,presence,
+bile salts,0,1,presence,
+bile pigments,0,1,presence,
+ketone bodies,0,1,presence,
+blood (urine),0,1,presence,blood
+nitrite,0,1,presence,
+bacteria,0,1,presence,
+urobilinogen,0,1,presence,
+ph,4.5,8.0,pH,urine ph
+specific gravity,1.005,1.030,ratio,urine density
+urine color,0,1,presence,colour
+urine appearance,0,1,presence,turbidity;clarity
+urine volume,800,2000,mL/day,24hr urine volume
+microalbumin urine,0,30,mg/L,urine microalbumin
+urine creatinine,20,275,mg/dL,
+protein creatinine ratio,0,0.2,ratio,upcr;urine pcr
+albumin creatinine ratio,0,30,mg/g,uacr;urine acr
+
+# Kidney Function
+urea,10,45,mg/dL,blood urea
+creatinine,0.6,1.3,mg/dL,serum creatinine;s. creatinine;s.creatinine;creatinine serum
+uric acid,3.5,7.2,mg/dL,serum uric acid;s. uric acid;uricacid
+bun,7,20,mg/dL,blood urea nitrogen
+sodium,135,145,mmol/L,serum sodium;sodium na;na+;s. sodium
+potassium,3.5,5.1,mmol/L,serum potassium
+chloride,98,107,mmol/L,serum chloride
+egfr,90,120,mL/min/1.73m²,estimated gfr
+cystatin c,0.55,1.15,mg/L,serum cystatin c
+microalbumin,0,30,mg/L,urine microalbumin
+24hr urine protein,0,150,mg/day,24 hour urine protein
+creatinine clearance,90,120,mL/min,ccr
+
+# Liver Function
+bilirubin total,0.2,1.2,mg/dL,total bilirubin
+bilirubin direct,0,0.3,mg/dL,conjugated bilirubin;direct bilirubin
+bilirubin indirect,0.2,0.9,mg/dL,unconjugated bilirubin;indirect bilirubin
+sgpt,0,40,U/L,alt;serum sgpt;sgpt(alt)
+sgot,0,40,U/L,ast;serum sgot;sgot(ast)
+alkaline phosphatase,44,147,U/L,alp
+gamma gt,9,48,U/L,ggt
+total protein,6.4,8.3,g/dL,total proteins;serum total proteins;serum total protein
+albumin serum,3.5,5.2,g/dL,serum albumin;albumin
+globulin,2.0,3.5,g/dL,
+ag ratio,1.0,2.2,ratio,albumin globulin ratio;a/g ratio;a g ratio
+ldh liver,140,280,U/L,lactate dehydrogenase liver
+5 nucleotidase,0,17,U/L,5nt
+
+# Pancreatic Enzymes
+amylase,28,100,U/L,serum amylase
+lipase,0,160,U/L,serum lipase
+
+# Thyroid Function
+t3,80,200,ng/dL,triiodothyronine
+t4,5.1,14.1,µg/dL,thyroxine
+tsh,0.4,4.0,µIU/mL,thyroid stimulating hormone
+free t3,2.3,4.2,pg/mL,ft3
+free t4,0.8,1.8,ng/dL,ft4
+anti tpo antibody,0,34,IU/mL,thyroid peroxidase antibody
+thyroglobulin,1.4,78,ng/mL,tg
+anti thyroglobulin antibody,0,115,IU/mL,atg antibody;anti tg
+
+# Lipid Profile
+cholesterol total,125,200,mg/dL,total cholesterol
+hdl,40,60,mg/dL,high density lipoprotein
+ldl,0,130,mg/dL,low density lipoprotein
+vldl,2,30,mg/dL,very low density lipoprotein
+triglycerides,0,150,mg/dL,trigs
+cholesterol hdl ratio,0,5,ratio,chol hdl ratio
+non-hdl cholesterol,0,160,mg/dL,
+ldl hdl ratio,0,3.5,ratio,ldl/hdl ratio
+apolipoprotein a1,100,180,mg/dL,apo a1
+apolipoprotein b,50,130,mg/dL,apo b
+lipoprotein a,0,30,mg/dL,lp(a);lpa
+
+# Diabetes
+glucose fasting,70,100,mg/dL,fbs
+glucose pp,70,140,mg/dL,ppbs
+hba1c,4,6,%,glycated hemoglobin
+glucose random,70,140,mg/dL,random blood sugar;rbs;glucose blood random;random blood glucose;blood sugar random;blood glucose random
+fructosamine,205,285,µmol/L,
+c-peptide,0.8,3.1,ng/mL,c peptide
+gad antibodies,0,5,IU/mL,gad65 antibody
+
+# Electrolytes & Minerals
+calcium,8.5,10.5,mg/dL,
+phosphorus,2.5,4.5,mg/dL,phosphate
+magnesium,1.6,2.6,mg/dL,
+iron,50,170,µg/dL,serum iron
+tibc,240,450,µg/dL,total iron binding capacity
+ferritin,30,400,ng/mL,serum ferritin
+zinc,60,130,µg/dL,
+copper,70,140,µg/dL,
+transferrin,200,360,mg/dL,serum transferrin
+transferrin saturation,20,50,%,tsat;iron saturation
+ceruloplasmin,20,60,mg/dL,
+manganese,4.7,18.3,µg/L,
+
+# Cardiac Markers
+troponin i,0,0.04,ng/mL,cardiac troponin i
+ck-mb,0,25,U/L,creatine kinase mb
+ldh,140,280,U/L,lactate dehydrogenase
+bnp,0,100,pg/mL,brain natriuretic peptide
+hs-crp,0,3,mg/L,high sensitivity crp
+troponin t,0,14,pg/mL,cardiac troponin t
+myoglobin,0,85,ng/mL,
+cpk total,26,192,U/L,creatine kinase;ck total;total cpk
+pro-bnp,0,300,pg/mL,nt-probnp;nt pro bnp
+
+# Hormones
+insulin fasting,2,25,µIU/mL,
+cortisol morning,5,25,µg/dL,
+prolactin,4,23,ng/mL,
+testosterone,300,1000,ng/dL,
+vitamin d,30,100,ng/mL,25-hydroxy vitamin d
+vitamin b12,200,900,pg/mL,cobalamin
+parathyroid hormone,15,65,pg/mL,pth
+estradiol,15,350,pg/mL,e2;oestradiol
+progesterone,0.1,25,ng/mL,
+lh,1.5,9.3,mIU/mL,luteinizing hormone
+fsh,1.4,18.1,mIU/mL,follicle stimulating hormone
+dhea-s,35,430,µg/dL,dehydroepiandrosterone sulfate
+cortisol evening,2,12,µg/dL,
+acth,6,50,pg/mL,adrenocorticotropic hormone
+growth hormone,0,5,ng/mL,gh;hgh
+igf-1,100,350,ng/mL,insulin like growth factor
+beta hcg,0,5,mIU/mL,human chorionic gonadotropin;hcg
+amh,1,10,ng/mL,anti mullerian hormone
+aldosterone,3,16,ng/dL,
+renin,0.5,3.5,ng/mL/hr,plasma renin activity
+
+# Infection Markers
+dengue ns1,0,1,presence,ns1 antigen
+malaria parasite,0,1,presence,mp test
+typhoid widal,0,1,presence,widal test
+covid antigen,0,1,presence,rapid test
+hiv,0,1,presence,hiv 1/2 antibodies
+hbsag,0,1,presence,hepatitis b surface antigen
+hcv,0,1,presence,hepatitis c virus
+hepatitis a igg,0,1,presence,hav igg
+hepatitis a igm,0,1,presence,hav igm
+hepatitis b core antibody,0,1,presence,anti hbc
+hepatitis b e antigen,0,1,presence,hbeag
+hepatitis b e antibody,0,1,presence,anti hbe
+vdrl,0,1,presence,syphilis test
+aso titer,0,200,IU/mL,antistreptolysin o
+procalcitonin,0,0.05,ng/mL,pct marker
+blood culture,0,1,presence,culture sensitivity
+urine culture,0,1,presence,
+
+# Coagulation
+pt,11,16,sec,prothrombin time
+inr,0.8,1.2,ratio,
+aptt,25,35,sec,activated partial thromboplastin time
+fibrinogen,200,400,mg/dL,
+ddimer,0,0.5,µg/mL,plasma d dimer
+bleeding time,2,7,min,bt
+clotting time,4,11,min,ct
+protein c,70,140,%,
+protein s,60,130,%,
+antithrombin iii,80,120,%,at iii
+
+# Arterial Blood Gas (ABG)
+ph (blood),7.35,7.45,none,arterial ph
+pco2,35,45,mmHg,carbon dioxide pressure
+po2,80,100,mmHg,oxygen pressure
+hco3,22,28,mEq/L,bicarbonate
+o2 saturation,95,100,%,oxygen saturation
+base excess,-2,2,mEq/L,be
+anion gap,8,12,mEq/L,
+lactate,0.5,2.2,mmol/L,blood lactate
+
+# Vitamins & Nutrition
+folate,2.5,20,ng/mL,folic acid
+homocysteine,5,15,µmol/L,
+vitamin a,30,65,µg/dL,retinol
+vitamin e,5.5,17,mg/L,tocopherol
+vitamin c,0.4,2,mg/dL,ascorbic acid
+vitamin b1,70,180,nmol/L,thiamine
+vitamin b6,5,50,µg/L,pyridoxine
+omega 3 index,4,8,%,
+albumin globulin ratio,1,2.2,ratio,ag ratio
+
+# Bone & Parathyroid
+alkaline phosphatase bone,30,120,U/L,bone alp
+calcium ionized,4.5,5.6,mg/dL,
+phosphatase acid,0,6.5,U/L,acid phosphatase
+osteocalcin,8,32,ng/mL,bone gla protein
+beta crosslaps,0.01,0.6,ng/mL,ctx;bone resorption marker
+deoxypyridinoline,2.3,5.4,nmol/L,dpd
+
+# Tumor Markers
+psa,0,4,ng/mL,prostate specific antigen
+cea,0,5,ng/mL,carcinoembryonic antigen
+ca-125,0,35,U/mL,cancer antigen 125
+ca 19-9,0,37,U/mL,cancer antigen 19-9
+afp,0,10,ng/mL,alpha fetoprotein
+ca 15-3,0,31.3,U/mL,cancer antigen 15-3
+beta 2 microglobulin,0.7,1.8,mg/L,b2m
+
+# Autoimmune Markers
+ana,0,1,presence,antinuclear antibody
+anti dsdna,0,30,IU/mL,anti double stranded dna
+rheumatoid factor,0,14,IU/mL,rf;ra factor
+anti ccp,0,20,U/mL,anti cyclic citrullinated peptide
+complement c3,90,180,mg/dL,c3
+complement c4,10,40,mg/dL,c4
+crp quantitative,0,5,mg/L,quantitative crp
+ige total,0,100,IU/mL,immunoglobulin e
+igg,700,1600,mg/dL,immunoglobulin g
+iga,70,400,mg/dL,immunoglobulin a
+igm,40,230,mg/dL,immunoglobulin m
+
+# Stool Examination
+stool occult blood,0,1,presence,fobt;fecal occult blood
+stool ova,0,1,presence,ova and parasites
+stool cyst,0,1,presence,
+stool wbc,0,5,/hpf,stool pus cells
+stool rbc,0,1,/hpf,
+stool ph,6,7.5,pH,
+fecal calprotectin,0,50,µg/g,
+
+# Semen Analysis
+sperm count,15,200,million/mL,
+sperm motility,40,100,%,total motility
+sperm morphology,4,100,%,normal forms
+semen volume,1.5,5,mL,ejaculate volume
+semen ph,7.2,8,pH,
+semen liquefaction time,0,30,min,
+
+# CSF Analysis
+csf protein,15,45,mg/dL,cerebrospinal fluid protein
+csf glucose,40,70,mg/dL,cerebrospinal fluid glucose
+csf cell count,0,5,/µL,csf wbc
+csf chloride,118,132,mEq/L,
+
+# Allergy Panel
+ige specific,0,0.35,kU/L,specific ige
+absolute eosinophil count blood,40,440,/µL,aec blood
+tryptase,0,11.4,ng/mL,serum tryptase
+
+# Miscellaneous
+ammonia,15,45,µg/dL,blood ammonia
+g6pd,7,20.5,U/g Hb,glucose-6-phosphate dehydrogenase
+haptoglobin,30,200,mg/dL,
+reticulocyte production index,1,2,ratio,rpi
+osmolality serum,275,295,mOsm/kg,serum osmolality
+osmolality urine,300,900,mOsm/kg,urine osmolality
+direct coombs test,0,1,presence,dat;direct antiglobulin test
+indirect coombs test,0,1,presence,iat;indirect antiglobulin test
+sed rate,0,20,mm/hr,sedimentation rate

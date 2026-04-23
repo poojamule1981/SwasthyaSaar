@@ -44,6 +44,7 @@ st.markdown('<div class="subtitle">Upload a lab report (PDF/image/txt).Medical R
 # Paths & config
 
 POSSIBLE_DATA_DIRS = [
+    os.path.join(os.path.dirname(os.path.abspath(__file__)), "data"),
     r"C:\Users\Pooja\nlp project\data",
     "/mnt/data",
     "."
@@ -55,9 +56,9 @@ def find_file(fname):
             return path
     return None
 
-POPPLER_PATH = r"C:\Program Files\poppler-25.07.0\Library\bin"  
+POPPLER_PATH = os.path.join(os.environ.get("LOCALAPPDATA", ""), "poppler", "poppler-24.08.0", "Library", "bin")  
 pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract.exe"  
-FINE_TUNED_MODEL_PATH = "./models/lab_summarizer"  
+FINE_TUNED_MODEL_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "models", "lab_summarizer")  
 
 # Load glossary, readme examples, reference ranges 
 
@@ -100,41 +101,32 @@ def load_glossary():
     return glossary
 
 @st.cache_data
-def load_readme_exp():
-    fname = find_file("readme_exp.csv")
-    fallback = {}
-    if not fname:
-        return fallback
-    try:
-        df = pd.read_csv(fname, engine="python")
-        ann_col, gpt_col = None, None
-        for c in df.columns:
-            cl = c.lower().strip()
-            if cl == "ann_text":
-                ann_col = c
-            if cl in ("gpt_generated", "gpt_text_to_annotate"):
-                gpt_col = c
-        if ann_col is None:
-            ann_col = df.columns[0]
-        if gpt_col is None and df.shape[1] > 1:
-            gpt_col = df.columns[1]
-        for _, row in df.iterrows():
-            key = str(row[ann_col]).strip().lower()
-            val = str(row[gpt_col]).strip() if gpt_col else ""
-            if key:
-                fallback[key] = val
-    except Exception as e:
-        st.warning(f"Failed to load readme_exp.csv: {e}")
-    return fallback
-
-@st.cache_data
 def load_reference_ranges():
+    """Load reference ranges and build section-to-parameter mapping from # comments."""
     fname = find_file("reference_ranges.csv")
     reference = {}
+    section_map = {}  # section_name -> [param_names]
     if not fname:
-        return reference
+        return reference, section_map
     try:
-        df = pd.read_csv(fname, engine="python")
+        # First pass: read raw lines to build section mapping
+        current_section = "general"
+        param_sections = {}  # param -> section
+        with open(fname, "r", encoding="utf-8") as f:
+            for line in f:
+                line = line.strip()
+                if line.startswith("#"):
+                    current_section = line.lstrip("# ").strip().lower()
+                    if current_section not in section_map:
+                        section_map[current_section] = []
+                elif line and not line.startswith("parameter"):
+                    param_name = line.split(",")[0].strip().lower()
+                    if param_name:
+                        param_sections[param_name] = current_section
+                        section_map.setdefault(current_section, []).append(param_name)
+
+        # Second pass: load data with pandas (skip # lines)
+        df = pd.read_csv(fname, engine="python", comment='#')
         param_col = None
         low_col = None
         high_col = None
@@ -185,14 +177,70 @@ def load_reference_ranges():
                 raw = str(row[syn_col]) if not pd.isna(row[syn_col]) else ""
                 syns = [s.strip().lower() for s in re.split(r"[;,/|]", raw) if s.strip()]
             if p:
-                reference[p] = {"low": low, "high": high, "unit": unit, "synonyms": syns}
+                reference[p] = {"low": low, "high": high, "unit": unit, "synonyms": syns, "section": param_sections.get(p, "general")}
     except Exception as e:
         st.error(f"Failed to load reference_ranges.csv: {e}")
-    return reference
+    return reference, section_map
 
 glossary_map = load_glossary()
-readme_map = load_readme_exp()
-reference_ranges = load_reference_ranges()
+reference_ranges, section_map = load_reference_ranges()
+
+@st.cache_data
+def load_medical_corpus():
+    """Load medical_corpus.json for Hindi/Marathi meanings"""
+    import json
+    fname = find_file("medical_corpus.json")
+    corpus = {}
+    if not fname:
+        return corpus
+    try:
+        with open(fname, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        for term, info in data.get("medical_terms", {}).items():
+            corpus[term.lower()] = info
+    except Exception:
+        pass
+    return corpus
+
+medical_corpus = load_medical_corpus()
+
+@st.cache_data
+def load_medical_jargon():
+    """Load medical_jargon.json — broad medical abbreviation/term definitions"""
+    import json, ast
+    fname = find_file("medical_jargon.json")
+    if not fname:
+        # Also check data/ directory
+        data_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", "medical_jargon.json")
+        if os.path.exists(data_path):
+            fname = data_path
+    jargon = {}
+    if not fname:
+        return jargon
+    try:
+        with open(fname, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        for term, raw_val in data.items():
+            key = term.strip().lower()
+            if not key:
+                continue
+            # Values are stored as string repr of lists, e.g. "['definition text']"
+            try:
+                parsed = ast.literal_eval(raw_val)
+                if isinstance(parsed, list):
+                    # Take the longest meaningful string from the list
+                    meanings = [s.strip() for s in parsed if isinstance(s, str) and len(s.strip()) > 5]
+                    if meanings:
+                        jargon[key] = max(meanings, key=len)
+                else:
+                    jargon[key] = str(parsed).strip()
+            except Exception:
+                jargon[key] = str(raw_val).strip()
+    except Exception:
+        pass
+    return jargon
+
+medical_jargon = load_medical_jargon()
 
 
 def _sanitize_meaning(text):
@@ -292,48 +340,49 @@ def build_param_metadata():
     for p, info in reference_ranges.items():
         full_form = ""
         meaning = ""
-        syns = info.get("synonyms", [])
-        candidate = None
-        for s in syns:
-            if " " in s:
-                candidate = s
-                break
-        if not candidate and syns:
-            candidate = syns[0]
-
-        # 1) Prefer glossary_map (trusted CSV) — try multiple key formats
         candidates_to_try = [p] + (info.get("synonyms", []) or [])
-        
-        for candidate in candidates_to_try:
-            candidate_lower = candidate.lower()
-            # Try exact match
-            if candidate_lower in glossary_map:
-                meaning = _sanitize_meaning(glossary_map[candidate_lower])
-                if meaning:
-                    full_form = candidate
-                    break
-            
-            # Try fuzzy match: check if candidate appears at start of any glossary key
-            for gkey, gval in glossary_map.items():
-                if gkey.startswith(candidate_lower) or candidate_lower in gkey:
-                    meaning = _sanitize_meaning(gval)
-                    if meaning:
-                        full_form = candidate
-                        break
-            if meaning:
-                break
 
-        # 2) Only use readme_map as a last resort and only if short & clean
+        # 1) Glossary is the primary merged source (contains all lab + general medical definitions)
         if not meaning:
             for candidate in candidates_to_try:
                 candidate_lower = candidate.lower()
-                raw = readme_map.get(candidate_lower, "")
-                if not raw:
-                    # Try fuzzy match in readme too
-                    for rkey, rval in readme_map.items():
-                        if rkey.startswith(candidate_lower) or candidate_lower in rkey:
-                            raw = rval
-                            break
+                if candidate_lower in glossary_map:
+                    raw = glossary_map[candidate_lower]
+                    if raw and raw.strip():
+                        meaning = raw.strip()
+                        if not full_form:
+                            full_form = candidate
+                        break
+
+        # 2) Try medical_corpus.json for full_form names + Hindi/Marathi translations
+        marathi = ""
+        hindi = ""
+        if not meaning or not full_form:
+            for cand in candidates_to_try:
+                corpus_entry = medical_corpus.get(cand.lower())
+                if corpus_entry:
+                    eng = corpus_entry.get("english", "")
+                    if eng and not full_form:
+                        full_form = eng
+                    marathi = corpus_entry.get("marathi", "")
+                    hindi = corpus_entry.get("hindi", "")
+                    break
+        # Also fetch translations even if full_form already found
+        if not marathi or not hindi:
+            for cand in candidates_to_try:
+                corpus_entry = medical_corpus.get(cand.lower())
+                if corpus_entry:
+                    if not marathi:
+                        marathi = corpus_entry.get("marathi", "")
+                    if not hindi:
+                        hindi = corpus_entry.get("hindi", "")
+                    break
+
+        # 3) Try medical_jargon.json (broadest coverage — medications, abbreviations, conditions)
+        if not meaning:
+            for candidate in candidates_to_try:
+                candidate_lower = candidate.lower()
+                raw = medical_jargon.get(candidate_lower, "")
                 if raw:
                     candidate_meaning = _sanitize_meaning(raw)
                     if candidate_meaning:
@@ -342,14 +391,12 @@ def build_param_metadata():
                             full_form = candidate
                         break
 
-        # 3) final safe fallbacks
         if not full_form:
             full_form = p.upper()
         if not meaning:
-            # If no definition available, leave meaning empty (handled downstream) to avoid incorrect auto-definitions
             meaning = ""
 
-        meta[p] = {"full_form": full_form, "meaning": meaning}
+        meta[p] = {"full_form": full_form, "meaning": meaning, "marathi": marathi, "hindi": hindi}
     return meta
 
 
@@ -411,7 +458,11 @@ def normalize_value(value_str, param=None):
         s = str(value_str).strip()
         if not s:
             return None
-        s = s.replace(",", ".")  # allow comma as decimal
+        # Handle comma: thousands separator (e.g., "9,000") vs decimal (e.g., "1,5")
+        # If comma is followed by exactly 3 digits, treat as thousands separator (remove it)
+        # Otherwise treat as decimal point
+        s = re.sub(r',(\d{3})(?!\d)', r'\1', s)  # "9,000" -> "9000", "16,700" -> "16700"
+        s = s.replace(",", ".")  # remaining commas are decimal: "1,5" -> "1.5"
 
         # quick date-like rejection: tokens with two dashes or slashes and 3-4 digit year
         if re.search(r"\d{1,2}[-/]\d{1,2}[-/]\d{2,4}", s) or re.search(r"\d{4}[-/]\d{1,2}[-/]\d{1,2}", s):
@@ -458,10 +509,19 @@ def normalize_value(value_str, param=None):
         if param and param in reference_ranges:
             low = reference_ranges[param].get("low")
             high = reference_ranges[param].get("high")
+            unit = reference_ranges[param].get("unit", "")
             if low is not None and high is not None:
-                # if value is absurdly larger than expected, flag as None
-                if val > 10 * max(1.0, high):
+                # For percentage-based params (max 100%), reject >100
+                if "%" in unit and val > 100:
                     return None
+                # For non-percentage params, reject values absurdly larger than range
+                # Use 100x to allow legitimately high pathological values (e.g., CRP 267 with range 0-5)
+                if "%" not in unit and val > 100 * max(1.0, high):
+                    return None
+                # OCR decimal-drop correction: if value far exceeds range but value/10 fits,
+                # assume OCR dropped the decimal point (e.g., "3.9" read as "39")
+                if val > high * 3 and val / 10 >= low and val / 10 <= high:
+                    val = val / 10
 
         return val
     except Exception:
@@ -470,6 +530,48 @@ def normalize_value(value_str, param=None):
 
 # Parameter extraction logic (line-level + local window)
 
+import json
+
+def detect_report_type(text):
+    """Detect report type(s) by matching section names and their parameter synonyms from reference_ranges.csv"""
+    text_lower = text.lower()
+    scores = {}
+    
+    for section_name, params in section_map.items():
+        score = 0
+        # Check if section name keywords appear in the text
+        section_words = section_name.split()
+        for word in section_words:
+            if len(word) > 2 and word in text_lower:
+                score += 2
+        
+        # Check how many parameters/synonyms from this section appear in text
+        for param in params:
+            if param in text_lower:
+                score += 1
+            details = reference_ranges.get(param, {})
+            for syn in details.get("synonyms", []):
+                if syn in text_lower:
+                    score += 1
+                    break
+        
+        if score >= 3:
+            scores[section_name] = score
+    
+    if not scores:
+        return []
+    return sorted(scores.keys(), key=lambda k: scores[k], reverse=True)
+
+def get_allowed_params(detected_types):
+    """Get set of allowed parameters based on detected report sections."""
+    if not detected_types:
+        return None  # None means allow everything
+    
+    allowed = set()
+    for section in detected_types:
+        allowed.update(section_map.get(section, []))
+    return allowed
+
 def extract_parameters(text, reference_ranges, fuzzy=False, fuzz_threshold=90, char_window=40):
     """
     Search each line separately; for each parameter occurrence, find numeric value
@@ -477,13 +579,34 @@ def extract_parameters(text, reference_ranges, fuzzy=False, fuzz_threshold=90, c
     """
     results = []
     seen_params = set()
+    line_claimed = {}  # li -> max matched candidate length (prevents short synonym false matches)
+    
+    # Detect report type(s) and get allowed parameters
+    detected_types = detect_report_type(text)
+    allowed_params = get_allowed_params(detected_types)
+    is_urine = any("urine" in dt for dt in detected_types)
+    
     # split into lines for local matching
     lines = [line.strip() for line in text.splitlines() if line.strip()]
 
+    # Pre-process: normalize lines by inserting spaces before uppercase letters in
+    # concatenated words (e.g., WBCCOUNT -> WBC COUNT, RBCCOUNT -> RBC COUNT)
+    lines_normalized = []
+    for line in lines:
+        # Insert space between lowercase/uppercase or between known patterns
+        normalized = re.sub(r'([a-z])([A-Z])', r'\1 \2', line)
+        # Also handle all-caps concatenation like WBCCOUNT, RBCCOUNT, PLATELETCOUNT
+        normalized = re.sub(r'([A-Z]+)(COUNT|CRIT|PHILS|CYTES)', r'\1 \2', normalized)
+        lines_normalized.append(normalized)
+
     for li, line in enumerate(lines):
         line_lower = line.lower()
+        # Also check the normalized version
+        norm_lower = lines_normalized[li].lower()
         for param, details in reference_ranges.items():
             if param in seen_params:
+                continue
+            if allowed_params is not None and param not in allowed_params:
                 continue
 
             candidates = [param] + details.get("synonyms", [])
@@ -492,16 +615,34 @@ def extract_parameters(text, reference_ranges, fuzzy=False, fuzz_threshold=90, c
 
             for cand in candidates:
                 cand_lower = cand.lower()
-                # exact word match in this line
-                if re.search(rf"\b{re.escape(cand_lower)}\b", line_lower):
+                # Skip very short candidates (1-2 chars) — too many false positives
+                if len(cand_lower) < 3:
+                    continue
+                # exact word match in this line (try both original and normalized)
+                match_in_original = re.search(rf"\b{re.escape(cand_lower)}\b", line_lower)
+                match_in_normalized = re.search(rf"\b{re.escape(cand_lower)}\b", norm_lower)
+                # Also try matching without spaces (OCR may remove spaces)
+                cand_nospace = cand_lower.replace(" ", "")
+                match_nospace = re.search(rf"\b{re.escape(cand_nospace)}\b", line_lower) if " " in cand_lower else None
+                # Also try matching with / replaced by space or removed (e.g. A/G RATIO)
+                line_slashfix = line_lower.replace("/", " ").replace("  ", " ")
+                cand_slashfix = cand_lower.replace("/", " ").replace("  ", " ")
+                match_slashfix = re.search(rf"\b{re.escape(cand_slashfix)}\b", line_slashfix) if "/" in cand_lower or "/" in line_lower else None
+                # Also try matching with dashes removed (e.g. "Glucose - Blood - Random" -> "Glucose Blood Random")
+                line_dashfix = re.sub(r'\s*-\s*', ' ', line_lower).replace("  ", " ").strip()
+                cand_dashfix = re.sub(r'\s*-\s*', ' ', cand_lower).replace("  ", " ").strip()
+                match_dashfix = re.search(rf"\b{re.escape(cand_dashfix)}\b", line_dashfix) if "-" in line_lower or "-" in cand_lower else None
+
+                if match_in_original or match_in_normalized or match_nospace or match_slashfix or match_dashfix:
                     matched = True
-                    # find the first occurrence position
-                    m_word = re.search(rf"\b{re.escape(cand_lower)}\b", line_lower)
+                    # find the first occurrence position (prefer original)
+                    m_word = match_in_original or match_nospace or match_in_normalized or match_slashfix or match_dashfix
+                    search_line = line if (match_in_original or match_nospace) else lines_normalized[li]
                     start = m_word.start()
                     # create a substring window around the match (same line)
                     left = max(0, start - char_window)
-                    right = min(len(line), start + len(cand_lower) + char_window)
-                    window = line[left:right]
+                    right = min(len(search_line), start + len(cand_lower) + char_window)
+                    window = search_line[left:right]
 
                     # search for numeric pattern inside window
                     m_val = re.search(r"([<>≤≥]?\s*\d+[.,]?\d*(?:\s*-\s*\d+[.,]?\d*)?)", window)
@@ -528,6 +669,13 @@ def extract_parameters(text, reference_ranges, fuzzy=False, fuzz_threshold=90, c
                             val = normalize_value(candidate_val, param)
                         break
 
+            if matched:
+                # Prevent short synonym false matches (e.g., "blood" matching "Red Blood Cells")
+                matched_cand_len = len(cand_lower) if cand_lower else 0
+                existing_len = line_claimed.get(li, 0)
+                if existing_len > matched_cand_len:
+                    continue  # skip: a longer synonym already matched on this line
+
             if matched and val is not None:
                 low, high = details.get("low"), details.get("high")
                 status = "Normal"
@@ -544,39 +692,116 @@ def extract_parameters(text, reference_ranges, fuzzy=False, fuzz_threshold=90, c
                     "line_index": li
                 })
                 seen_params.add(param)
+                line_claimed[li] = max(existing_len, matched_cand_len)
+            
+            # Handle qualitative results (Present/Absent/Positive/Negative/Nil/Trace)
+            elif matched and val is None and is_urine:
+                qual_match = re.search(
+                    r"(present\s*\([+]+\)|present|absent|positive|negative|nil|trace|s[\.\s]*turbid)",
+                    line_lower
+                )
+                if qual_match:
+                    qual_val = qual_match.group(1).strip()
+                    if any(k in qual_val for k in ("present", "positive", "turbid")):
+                        status = "Abnormal"
+                        display_val = qual_val.upper()
+                    elif "trace" in qual_val:
+                        status = "Normal"
+                        display_val = "Trace"
+                    else:
+                        status = "Normal"
+                        display_val = "Absent"
+                    results.append({
+                        "parameter": param,
+                        "value": display_val,
+                        "unit": details.get("unit", ""),
+                        "status": status,
+                        "line_index": li
+                    })
+                    seen_params.add(param)
+                    line_claimed[li] = max(existing_len, matched_cand_len)
 
     return results
 
 # Build patient-friendly markdown (English) from results
 
-STATUS_EMOJI = {"Normal": "🟢", "High": "🔴", "Low": "🟡"}
+STATUS_EMOJI = {"Normal": "🟢", "High": "🔴", "Low": "🟡", "Abnormal": "🔴"}
 
-def build_patient_markdown(results):
+def build_patient_markdown(results, lang="en"):
     if not results:
+        if lang == "mr":
+            return "तुमच्या अहवालात कोणतेही वैध चाचणी निकाल आढळले नाहीत."
+        elif lang == "hi":
+            return "आपकी रिपोर्ट में कोई मान्य परीक्षण परिणाम नहीं मिला."
         return "No valid test results detected in your report."
     blocks = []
     for r in results:
         p = r["parameter"]
-        meta = param_meta.get(p, {"full_form": p.upper(), "meaning": ""})
+        meta = param_meta.get(p, {"full_form": p.upper(), "meaning": "", "marathi": "", "hindi": ""})
         full = meta["full_form"]
         meaning = meta["meaning"] or "Meaning not available in dataset; consult your clinician."
+        marathi_name = meta.get("marathi", "")
+        hindi_name = meta.get("hindi", "")
         emoji = STATUS_EMOJI.get(r["status"], "ℹ️")
         value = r["value"]
         unit = r.get("unit", "")
         status = r["status"]
-        if status == "High":
-            action = "This may indicate a possible health issue. Please consult your doctor."
-        elif status == "Low":
-            action = "This may be below the normal range. Consultation is advised."
+
+        if lang == "mr":
+            # Marathi output
+            local_name = marathi_name or full
+            meaning_display = marathi_name if marathi_name else meaning
+            if status == "High" or status == "Abnormal":
+                action = "हे संभाव्य आरोग्य समस्या दर्शवू शकते. कृपया डॉक्टरांचा सल्ला घ्या."
+                status_mr = "जास्त" if status == "High" else "असामान्य"
+            elif status == "Low":
+                action = "हे सामान्य श्रेणीपेक्षा कमी असू शकते. सल्ला घेणे योग्य आहे."
+                status_mr = "कमी"
+            else:
+                action = "हे सामान्य श्रेणीत आहे, चांगल्या आरोग्याचे लक्षण."
+                status_mr = "सामान्य"
+            header = f"{emoji} **{p.upper()} ({local_name})**"
+            block_lines = [
+                header,
+                f"- **अर्थ:** {meaning_display}",
+                f"- **निकाल:** {value} {unit} — **{status_mr}**",
+                f"- **सल्ला:** {action}"
+            ]
+        elif lang == "hi":
+            # Hindi output
+            local_name = hindi_name or full
+            meaning_display = hindi_name if hindi_name else meaning
+            if status == "High" or status == "Abnormal":
+                action = "यह संभावित स्वास्थ्य समस्या का संकेत हो सकता है. कृपया डॉक्टर से परामर्श करें."
+                status_hi = "अधिक" if status == "High" else "असामान्य"
+            elif status == "Low":
+                action = "यह सामान्य सीमा से कम हो सकता है. परामर्श लेना उचित है."
+                status_hi = "कम"
+            else:
+                action = "यह सामान्य सीमा में है, अच्छे स्वास्थ्य का संकेत."
+                status_hi = "सामान्य"
+            header = f"{emoji} **{p.upper()} ({local_name})**"
+            block_lines = [
+                header,
+                f"- **अर्थ:** {meaning_display}",
+                f"- **परिणाम:** {value} {unit} — **{status_hi}**",
+                f"- **सलाह:** {action}"
+            ]
         else:
-            action = "This is within the normal range, indicating good health."
-        header = f"{emoji} **{p.upper()} ({full})**"
-        block_lines = [
-            header,
-            f"- **Meaning:** {meaning}",
-            f"- **Result:** {value} {unit} — **{status}**",
-            f"- **Advice:** {action}"
-        ]
+            # English output
+            if status == "High" or status == "Abnormal":
+                action = "This may indicate a possible health issue. Please consult your doctor."
+            elif status == "Low":
+                action = "This may be below the normal range. Consultation is advised."
+            else:
+                action = "This is within the normal range, indicating good health."
+            header = f"{emoji} **{p.upper()} ({full})**"
+            block_lines = [
+                header,
+                f"- **Meaning:** {meaning}",
+                f"- **Result:** {value} {unit} — **{status}**",
+                f"- **Advice:** {action}"
+            ]
         blocks.append("\n".join(block_lines))
     md = "\n\n".join(blocks)
     return md
@@ -623,7 +848,7 @@ def build_short_summary(results):
     if not results:
         return "No test results detected."
 
-    categories = {"Normal": [], "High": [], "Low": []}
+    categories = {"Normal": [], "High": [], "Low": [], "Abnormal": []}
     for r in results:
         status = r.get("status", "Normal")
         param = r.get("parameter", "").upper()
@@ -631,7 +856,7 @@ def build_short_summary(results):
 
     # Build summary string
     parts = []
-    for cat in ["Normal", "High", "Low"]:
+    for cat in ["Normal", "High", "Low", "Abnormal"]:
         if categories[cat]:
             names = ", ".join(categories[cat])
             parts.append(f"{cat}: {names} ({len(categories[cat])})")
@@ -685,8 +910,8 @@ if uploaded_file:
         st.markdown(ai_summary, unsafe_allow_html=True)
 
         # Detailed patient summary
-        patient_md = build_patient_markdown(params)
         lang_code = "en" if language=="English" else ("hi" if language=="Hindi" else "mr")
+        patient_md = build_patient_markdown(params, lang=lang_code)
         translated_summary = translate_with_fallback(patient_md, lang_code)
 
         st.subheader("💬 Patient-Friendly Summary")
