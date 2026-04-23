@@ -1,8 +1,8 @@
 .venv/
+venv/
 __pycache__/
 *.pyc
 *.pdf
 *.png
 models/
-data/
 

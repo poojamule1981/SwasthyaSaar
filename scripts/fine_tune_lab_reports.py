@@ -1,9 +1,11 @@
+import os
 import pandas as pd
 from datasets import Dataset, DatasetDict
 from transformers import AutoTokenizer, AutoModelForSeq2SeqLM, TrainingArguments, Trainer
 
 # ===== 1. Load CSV =====
-csv_path = r"C:\Users\Pooja\nlp project\lab_reports_dataset.csv"
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+csv_path = os.path.join(BASE_DIR, "lab_reports_dataset.csv")
 df = pd.read_csv(csv_path)
 print("Columns:", df.columns)
 
