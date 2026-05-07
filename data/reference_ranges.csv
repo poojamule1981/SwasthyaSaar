@@ -1,13 +1,13 @@
 parameter,low,high,unit,synonyms
 # Hematology
-hemoglobin,12,16,g/dL,hb;haemoglobin;hgb
-hematocrit,36,46,%,pcv;haematocrit;pcv(haematocrit)
-wbc count,4000,11000,/µL,white blood cells;wbccount;wbc;total wbc count;total leucocyte count;tlc;total wbc
-platelet count,1.5,4.5,lakhs/cumm,platelets;plateletcount;plt;platelet
-rbc count,4.5,6.0,mill/µL,red blood cells;rbccount;rbc;total rbc count
-mcv,80,100,fL,mean corpuscular volume
-mch,27,32,pg,mean corpuscular hemoglobin
-mchc,32,36,g/dL,mean corpuscular hemoglobin concentration
+hemoglobin,12,16,g/dL,hb;haemoglobin;hgb;hemoglobin hb
+hematocrit,36,46,%,pcv;haematocrit;pcv(haematocrit);packed cell volume;packed cell volume hct;hct;hematocrit pcv
+wbc count,4000,11000,/µL,white blood cells;wbccount;wbc;total wbc count;total leucocyte count;tlc;total wbc;wbc count total leucocyte count
+platelet count,150000,450000,cells/cumm,platelets;plateletcount;plt;platelet;thrombocytes;platelet count thrombocytes
+rbc count,4.5,6.0,mill/µL,red blood cells;rbccount;rbc;total rbc count;r.b.c. count;rbc count
+mcv,80,100,fL,mean corpuscular volume;mean cell volume;mean cell volume mcv
+mch,27,32,pg,mean corpuscular hemoglobin;mean cell hemoglobin;mean cell hemoglobin mch;mean corpuscular hb
+mchc,32,36,g/dL,mean corpuscular hemoglobin concentration;mean cell hb conc;mean cell hb conc mchc;mean corp hb concentration;mean corpuscular hb concentration
 neutrophils,35,70,%,neutrophil;neutrophil count;polymorphs;polymorph
 lymphocytes,20,40,%,lymphocyte;lymphocyte count
 eosinophils,1,8,%,eosinophil;eosinophil count
@@ -16,14 +16,14 @@ basophils,0,1,%,basophil;basophil count
 esr,0,20,mm/hr,erythrocyte sedimentation rate
 crp,0,5,mg/L,c-reactive protein
 reticulocyte count,0.5,1.5,%,retic count
-rdw,11.5,14.5,%,red cell distribution width
+rdw,11.5,14.5,%,red cell distribution width;rdw cv;rdw-cv;red cell distribution width rdw cv
 mpv,7.5,11.5,fL,mean platelet volume
-pct,0.15,0.4,%,plateletcrit
+pct,0.15,0.4,%,plateletcrit;platelet crit;pct (platelet crit)
 pdw,10,17.9,%,platelet distribution width
-absolute neutrophil count,2000,7000,/µL,anc
-absolute lymphocyte count,1000,3000,/µL,alc
-absolute eosinophil count,40,440,/µL,aec
-absolute monocyte count,200,800,/µL,amc
+absolute neutrophil count,2000,7000,/µL,anc;absolute neutrophils count
+absolute lymphocyte count,1000,3000,/µL,alc;absolute lymphocytes count
+absolute eosinophil count,40,440,/µL,aec;absolute eosinophils count
+absolute monocyte count,200,800,/µL,amc;absolute monocytes count
 peripheral smear,0,1,presence,blood smear;ps
 
 # Urine Examination
@@ -66,15 +66,15 @@ microalbumin,0,30,mg/L,urine microalbumin
 creatinine clearance,90,120,mL/min,ccr
 
 # Liver Function
-bilirubin total,0.2,1.2,mg/dL,total bilirubin
-bilirubin direct,0,0.3,mg/dL,conjugated bilirubin;direct bilirubin
-bilirubin indirect,0.2,0.9,mg/dL,unconjugated bilirubin;indirect bilirubin
-sgpt,0,40,U/L,alt;serum sgpt;sgpt(alt)
-sgot,0,40,U/L,ast;serum sgot;sgot(ast)
+bilirubin total,0.2,1.2,mg/dL,total bilirubin;bilirubin (total)
+bilirubin direct,0,0.3,mg/dL,conjugated bilirubin;direct bilirubin;bilirubin (direct)
+bilirubin indirect,0.2,0.9,mg/dL,unconjugated bilirubin;indirect bilirubin;bilirubin (indirect)
+sgpt,0,40,U/L,alt;serum sgpt;sgpt(alt);alanine aminotransferase;alt/sgpt;alt sgpt
+sgot,0,40,U/L,ast;serum sgot;sgot(ast);aspartate aminotransferase;ast/sgot;ast sgot
 alkaline phosphatase,44,147,U/L,alp
 gamma gt,9,48,U/L,ggt
 total protein,6.4,8.3,g/dL,total proteins;serum total proteins;serum total protein
-albumin serum,3.5,5.2,g/dL,serum albumin;albumin
+albumin serum,3.5,5.2,g/dL,serum albumin;albumin;s. albumin;s.albumin;serum albumin level
 globulin,2.0,3.5,g/dL,
 ag ratio,1.0,2.2,ratio,albumin globulin ratio;a/g ratio;a g ratio
 ldh liver,140,280,U/L,lactate dehydrogenase liver
@@ -95,7 +95,7 @@ thyroglobulin,1.4,78,ng/mL,tg
 anti thyroglobulin antibody,0,115,IU/mL,atg antibody;anti tg
 
 # Lipid Profile
-cholesterol total,125,200,mg/dL,total cholesterol
+cholesterol total,125,200,mg/dL,total cholesterol;cholesterol;serum cholesterol;s.cholesterol;s cholesterol;total cholesterol serum
 hdl,40,60,mg/dL,high density lipoprotein
 ldl,0,130,mg/dL,low density lipoprotein
 vldl,2,30,mg/dL,very low density lipoprotein
@@ -108,10 +108,10 @@ apolipoprotein b,50,130,mg/dL,apo b
 lipoprotein a,0,30,mg/dL,lp(a);lpa
 
 # Diabetes
-glucose fasting,70,100,mg/dL,fbs
-glucose pp,70,140,mg/dL,ppbs
+glucose fasting,70,100,mg/dL,fbs;blood sugar fasting;fasting blood sugar;fasting glucose;blood glucose fasting;fasting blood glucose;sugar fasting;fasting sugar;glucose-fasting;fbs (fasting blood sugar)
+glucose pp,70,140,mg/dL,ppbs;blood sugar pp;post prandial blood sugar;pp blood sugar;blood glucose pp;pp glucose;blood sugar post prandial;glucose post prandial;ppbs (post prandial blood sugar);2 hour glucose
 hba1c,4,6,%,glycated hemoglobin
-glucose random,70,140,mg/dL,random blood sugar;rbs;glucose blood random;random blood glucose;blood sugar random;blood glucose random
+glucose random,70,140,mg/dL,random blood sugar;rbs;glucose blood random;random blood glucose;blood sugar random;blood glucose random;glucose-random
 fructosamine,205,285,µmol/L,
 c-peptide,0.8,3.1,ng/mL,c peptide
 gad antibodies,0,5,IU/mL,gad65 antibody
@@ -283,3 +283,257 @@ osmolality urine,300,900,mOsm/kg,urine osmolality
 direct coombs test,0,1,presence,dat;direct antiglobulin test
 indirect coombs test,0,1,presence,iat;indirect antiglobulin test
 sed rate,0,20,mm/hr,sedimentation rate
+
+# Additional Hematology
+immature granulocytes,0,0.5,%,ig%;immature granulocyte percentage
+nucleated rbc,0,0,/100 WBC,nrbc
+hematocrit ratio,0.40,0.54,ratio,hct ratio
+reticulocyte hemoglobin,28,35,pg,ret-he;chr
+myelocytes,0,0,%,myelocyte
+metamyelocytes,0,0,%,metamyelocyte
+band cells,0,5,%,bands;band forms;band neutrophils
+large unstained cells,0,4,%,luc
+atypical lymphocytes,0,0,%,reactive lymphocytes
+blast cells,0,0,%,blasts
+total rbc indices,0,1,presence,rbc indices
+mean reticulocyte volume,95,120,fL,mrv
+immature reticulocyte fraction,2,17,%,irf
+hemoglobin f,0,2,%,fetal hemoglobin;hb f
+hemoglobin a2,2,3.5,%,hb a2
+hemoglobin s,0,0,%,hb s;sickle hemoglobin
+sickling test,0,1,presence,sickle cell test
+
+# Additional Liver Function
+gamma glutamyl transferase,9,48,U/L,ggt;gamma gt;gamma-gt;g.g.t.
+5 prime nucleotidase,0,17,U/L,5nt;5-nucleotidase
+bile acids total,0,10,µmol/L,serum bile acids;total bile acids
+conjugated bilirubin,0,0.3,mg/dL,direct bilirubin
+unconjugated bilirubin,0.2,0.9,mg/dL,indirect bilirubin
+prealbumin,20,40,mg/dL,transthyretin
+cholinesterase,5320,12920,U/L,pseudocholinesterase;buche
+aspartate transaminase,0,40,U/L,ast;sgot;aspartate aminotransferase
+alanine transaminase,0,40,U/L,alt;sgpt;alanine aminotransferase
+
+# Additional Kidney Function
+blood urea nitrogen,7,20,mg/dL,bun;b.u.n.
+urea nitrogen,7,20,mg/dL,serum urea nitrogen
+serum osmolality,275,295,mOsm/kg,plasma osmolality
+fractional excretion sodium,0,1,%,fena
+renal function test,0,1,presence,rft;kidney function test;kft
+urine specific gravity,1.005,1.030,ratio,sp. gravity;sp gravity
+urine ph,4.5,8.0,pH,ph (urine)
+24 hour urine calcium,100,300,mg/day,24hr urine calcium
+24 hour urine phosphorus,400,1300,mg/day,24hr urine phosphorus
+urine sodium,40,220,mmol/day,24hr urine sodium
+
+# Additional Diabetes & Metabolism
+blood sugar fasting,70,100,mg/dL,fasting blood sugar;fbs;glucose fasting;fasting glucose
+blood sugar pp,70,140,mg/dL,post prandial blood sugar;ppbs;glucose pp;pp blood sugar;blood sugar post prandial
+blood sugar random,70,140,mg/dL,random blood sugar;rbs;random glucose
+insulin pp,0,50,µIU/mL,post prandial insulin
+homa-ir,0,2.5,ratio,insulin resistance index
+glucose tolerance test,70,140,mg/dL,gtt;ogtt;oral glucose tolerance
+microalbumin creatinine ratio,0,30,mg/g,uacr;acr
+
+# Additional Lipid Profile
+lp-pla2,0,200,ng/mL,lipoprotein phospholipase a2
+small dense ldl,0,30,mg/dL,sd-ldl
+oxidized ldl,26,117,U/L,ox-ldl
+remnant cholesterol,0,30,mg/dL,
+total lipids,400,1000,mg/dL,serum total lipids
+free fatty acids,0.1,0.6,mmol/L,nefa;non esterified fatty acids
+phospholipids,150,300,mg/dL,serum phospholipids
+chylomicrons,0,1,presence,
+
+# Additional Thyroid
+thyroid antibodies,0,1,presence,thyroid autoantibodies
+total t3,80,200,ng/dL,total triiodothyronine;t3 total
+total t4,5.1,14.1,µg/dL,total thyroxine;t4 total
+reverse t3,10,24,ng/dL,rt3
+thyroid binding globulin,14,31,µg/mL,tbg
+calcitonin,0,10,pg/mL,serum calcitonin
+trab,0,1.75,IU/L,tsh receptor antibody;thyroid stimulating antibody
+
+# Additional Cardiac Markers
+homocysteine serum,5,15,µmol/L,plasma homocysteine
+lipoprotein associated phospholipase,0,200,ng/mL,lp-pla2
+galectin 3,0,17.8,ng/mL,
+st2,0,35,ng/mL,soluble st2
+ischemia modified albumin,0,85,kU/L,ima
+heart type fatty acid binding protein,0,6.3,ng/mL,h-fabp
+myeloperoxidase,0,470,pmol/L,mpo
+
+# Additional Hormones
+free testosterone,5,25,pg/mL,
+shbg,10,80,nmol/L,sex hormone binding globulin
+dihydrotestosterone,30,85,ng/dL,dht
+androstenedione,0.3,3.3,ng/mL,
+17-oh progesterone,0.2,3.3,ng/mL,17-ohp;17 hydroxyprogesterone
+inhibin b,25,325,pg/mL,
+anti mullerian hormone,1,10,ng/mL,amh
+dehydroepiandrosterone,130,980,µg/dL,dhea
+melatonin,10,80,pg/mL,
+serotonin,50,220,ng/mL,5-ht;5-hydroxytryptamine
+dopamine,0,30,pg/mL,
+norepinephrine,70,750,pg/mL,noradrenaline
+epinephrine,0,100,pg/mL,adrenaline
+vanillylmandelic acid,1,8,mg/day,vma
+5-hiaa,2,8,mg/day,5-hydroxyindoleacetic acid
+metanephrines plasma,0,0.5,nmol/L,free metanephrines
+
+# Additional Vitamins & Minerals
+vitamin k,0.1,2.2,ng/mL,phylloquinone
+biotin,200,500,pg/mL,vitamin b7;vitamin h
+pantothenic acid,1,7,µg/mL,vitamin b5
+niacin,0.5,8.45,µg/mL,vitamin b3;nicotinic acid
+riboflavin,4,24,µg/dL,vitamin b2
+coenzyme q10,0.4,1.7,µg/mL,coq10;ubiquinone
+selenium,70,150,µg/L,serum selenium
+chromium,0.05,0.5,µg/L,
+iodine,100,200,µg/L,urinary iodine
+lithium,0.6,1.2,mmol/L,serum lithium
+boron,0.03,0.12,µg/mL,
+silicon,5,20,µg/L,
+vanadium,0.01,1,µg/L,
+
+# Additional Infection & Immunity
+il-6,0,7,pg/mL,interleukin 6
+tnf-alpha,0,8.1,pg/mL,tumor necrosis factor alpha
+interferon gamma,0,15,pg/mL,ifn-gamma
+cd4 count,500,1500,cells/µL,cd4+ t cells;cd4 lymphocyte count
+cd8 count,150,1000,cells/µL,cd8+ t cells
+cd4 cd8 ratio,1,4,ratio,cd4/cd8
+nk cells,90,600,cells/µL,natural killer cells;cd56
+quantiferon tb,0,0.35,IU/mL,tb gold;igra
+mantoux test,0,10,mm,tuberculin test
+rpr,0,1,presence,rapid plasma reagin
+tpha,0,1,presence,treponema pallidum
+ebv vca igg,0,1,presence,epstein barr virus
+cmv igg,0,1,presence,cytomegalovirus igg
+cmv igm,0,1,presence,cytomegalovirus igm
+hsv 1 igg,0,1,presence,herpes simplex virus 1
+hsv 2 igg,0,1,presence,herpes simplex virus 2
+toxoplasma igg,0,1,presence,toxo igg
+rubella igg,0,1,presence,german measles igg
+chikungunya igm,0,1,presence,chik igm
+leptospira igm,0,1,presence,leptospirosis
+brucella antibodies,0,1,presence,brucellosis
+coombs test,0,1,presence,antiglobulin test
+helicobacter pylori,0,1,presence,h. pylori;hp antibody
+
+# Additional Coagulation
+factor viii,50,150,%,factor 8;antihemophilic factor
+factor ix,60,150,%,factor 9;christmas factor
+von willebrand factor,50,160,%,vwf
+lupus anticoagulant,0,1,presence,la;drvvt
+anticardiolipin antibodies,0,15,GPL,acl;aca
+beta 2 glycoprotein antibodies,0,20,SGU,anti b2gp1
+thrombin time,14,21,sec,tt
+reptilase time,16,22,sec,
+platelet aggregation,0,100,%,
+platelet function test,0,1,presence,pfa-100
+
+# Additional Tumor Markers
+he4,0,140,pmol/L,human epididymis protein 4
+scc,0,1.5,ng/mL,squamous cell carcinoma antigen
+cyfra 21-1,0,3.3,ng/mL,cytokeratin 19 fragment
+nse,0,16.3,ng/mL,neuron specific enolase
+chromogranin a,0,100,ng/mL,cga
+s100,0,0.1,µg/L,s-100 protein
+ca 72-4,0,6.9,U/mL,cancer antigen 72-4
+free psa,0,1,ng/mL,free prostate specific antigen
+psa ratio,0,25,%,free/total psa ratio
+beta hcg quantitative,0,5,mIU/mL,quantitative hcg;serum hcg
+
+# Additional Autoimmune & Inflammatory
+anti smith antibody,0,1,presence,anti-sm
+anti ssa antibody,0,1,presence,anti-ro;ro antibody
+anti ssb antibody,0,1,presence,anti-la;la antibody
+anti jo-1 antibody,0,1,presence,anti jo1
+anti scl-70 antibody,0,1,presence,anti topoisomerase
+anca,0,1,presence,anti neutrophil cytoplasmic antibody
+p-anca,0,1,presence,perinuclear anca;mpo-anca
+c-anca,0,1,presence,cytoplasmic anca;pr3-anca
+anti gliadin antibody,0,20,U/mL,aga
+anti ttg antibody,0,20,U/mL,anti tissue transglutaminase;ttg igg;ttg iga
+hla b27,0,1,presence,
+calprotectin,0,50,µg/g,fecal calprotectin
+lactoferrin,0,7.25,µg/mL,
+lysozyme,4,15.6,mg/L,muramidase
+
+# Drug Monitoring
+theophylline,10,20,µg/mL,aminophylline
+phenytoin,10,20,µg/mL,dilantin
+carbamazepine,4,12,µg/mL,tegretol
+valproic acid,50,100,µg/mL,depakote
+digoxin,0.8,2,ng/mL,
+vancomycin trough,10,20,µg/mL,
+gentamicin peak,5,10,µg/mL,
+methotrexate,0,0.05,µmol/L,mtx
+cyclosporine,100,400,ng/mL,
+tacrolimus,5,15,ng/mL,fk506
+sirolimus,4,12,ng/mL,rapamycin
+everolimus,3,8,ng/mL,
+
+# Fluid Analysis (Pleural/Peritoneal/Synovial)
+pleural fluid protein,0,3,g/dL,
+pleural fluid ldh,0,200,U/L,
+pleural fluid glucose,60,100,mg/dL,
+pleural fluid ph,7.4,7.6,pH,
+ascitic fluid albumin,0,1.1,g/dL,saag
+synovial fluid wbc,0,200,/µL,joint fluid wbc
+synovial fluid glucose,60,100,mg/dL,joint fluid glucose
+
+# Genetic & Molecular
+karyotype,0,1,presence,chromosome analysis
+fish,0,1,presence,fluorescence in situ hybridization
+pcr,0,1,presence,polymerase chain reaction
+bcr-abl,0,1,presence,philadelphia chromosome
+jak2 mutation,0,1,presence,jak2 v617f
+brca1,0,1,presence,breast cancer gene 1
+brca2,0,1,presence,breast cancer gene 2
+factor v leiden,0,1,presence,fvl mutation
+mthfr,0,1,presence,methylenetetrahydrofolate reductase
+hla typing,0,1,presence,human leukocyte antigen
+
+# Pancreatic Function
+elastase fecal,200,500,µg/g,pancreatic elastase
+trypsin,0,300,ng/mL,immunoreactive trypsinogen
+stool fat,0,7,g/day,fecal fat;72hr fecal fat
+
+# Adrenal Function
+cortisol urinary free,4,50,µg/day,24hr urine cortisol;ufc
+aldosterone plasma,3,16,ng/dL,serum aldosterone
+renin plasma,0.5,3.5,ng/mL/hr,pra;plasma renin activity
+aldosterone renin ratio,0,30,ratio,arr
+17-ketosteroids,6,20,mg/day,17-ks
+catecholamines plasma,0,1,presence,plasma catecholamines
+cortisol stimulation test,18,25,µg/dL,acth stimulation test;cosyntropin test
+
+# Metabolic Panel
+anion gap,8,12,mEq/L,serum anion gap
+co2 total,23,29,mmol/L,total carbon dioxide;tco2;bicarbonate
+blood gas ph,7.35,7.45,pH,arterial ph;venous ph
+lactic acid,0.5,2.2,mmol/L,lactate;blood lactate
+pyruvate,0.3,0.9,mg/dL,pyruvic acid
+ketones blood,0,0.6,mmol/L,beta hydroxybutyrate;bhb
+urine ketones,0,1,presence,ketonuria
+
+# Neonatal
+bilirubin neonatal,0,12,mg/dL,newborn bilirubin;neonatal jaundice
+tsh neonatal,1,10,µIU/mL,newborn tsh
+g6pd neonatal,7,20.5,U/g Hb,newborn g6pd
+phenylketonuria,0,2,mg/dL,pku;phenylalanine
+galactose,0,20,mg/dL,galactosemia screening
+17-ohp neonatal,0,3,ng/mL,congenital adrenal hyperplasia screening
+
+# Eye Related
+intraocular pressure,10,21,mmHg,iop;eye pressure
+schirmer test,10,30,mm,tear production test
+
+# Respiratory
+fev1,80,120,%,forced expiratory volume
+fvc,80,120,%,forced vital capacity
+fev1/fvc ratio,70,100,%,tiffeneau index
+peak flow,80,120,%,pefr;peak expiratory flow rate
+dlco,80,120,%,diffusion capacity
