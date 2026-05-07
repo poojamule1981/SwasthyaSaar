@@ -39,10 +39,12 @@ The app supports **English, Hindi, and Marathi** output — making healthcare in
 - Supports **23 report types**: CBC, LFT, KFT, Lipid Profile, Thyroid, Diabetes, Electrolytes, Iron Studies, Urine Routine, Coagulation, CRP/Inflammatory Markers, Cardiac Markers, Hormones, Hepatitis, ABG, Vitamins & Minerals, Pancreatic Enzymes, Tumor Markers, Autoimmune Markers, Stool Examination, Semen Analysis, CSF Analysis, Allergy Panel
 
 ### 📊 Parameter Extraction & Analysis
-- Extracts **239 medical parameters** with their values and units
+- Extracts **448 medical parameters** with their values and units
+- Covers 30+ categories: Hematology, KFT, LFT, Thyroid, Lipid, Diabetes, Cardiac, Hormones, Vitamins, Coagulation, Tumor Markers, Drug Monitoring, Genetics, and more
 - Compares against **biological reference ranges** (age/gender-aware)
 - Flags each parameter as **Normal**, **High**, or **Low**
-- Handles edge cases: percentage values, ranges, non-numeric entries
+- Handles Indian number formats (2,45,000), decimal corrections, and OCR noise
+- **Tested accuracy**: 98.4% Precision, 93.8% Recall, 96.0% F1 Score
 
 ### 📝 Patient-Friendly Explanations
 - **26,460 medical term definitions** in the glossary
@@ -52,9 +54,10 @@ The app supports **English, Hindi, and Marathi** output — making healthcare in
 
 ### 🌐 Multilingual Support (English / Hindi / Marathi)
 - **Meaning-based translations** (not transliteration)
-- Hand-crafted Hindi & Marathi translations for all 239 reference range parameters
+- All summaries shown in English + Hindi + Marathi simultaneously
+- Hand-crafted Hindi & Marathi translations for all 448 reference range parameters
 - Additional translations via **medical_corpus.json** for glossary terms
-- Fallback to Google Translate API for uncovered terms
+- Fallback to RapidAPI Google Translate for uncovered terms
 
 ### 🧠 AI Summarization
 - Fine-tuned **BART** (facebook/bart-large-cnn) model for medical report summarization
@@ -80,19 +83,31 @@ SwasthyaSaar/
 │
 ├── data/                              # Runtime data files
 │   ├── glossary - glossary.csv        # 26,460 medical term definitions
-│   ├── reference_ranges.csv           # 239 parameters, 23 report sections
+│   ├── reference_ranges.csv           # 448 parameters, 30+ sections
 │   ├── medical_corpus.json            # Hindi/Marathi translations
 │   └── medical_jargon.json            # 42,693 term fallback dictionary
 │
 ├── models/                            # ML models
 │   └── lab_summarizer/                # Fine-tuned BART summarization model
 │
-└── scripts/                           # One-time utility & training scripts
+├── results/                           # Test results & graphs
+│   ├── real_test_results.csv          # Per-report precision/recall/F1
+│   ├── real_test_summary.json         # Overall metrics summary
+│   └── expected_vs_actual_comparison.csv  # Parameter-by-parameter analysis
+│
+├── test_reports/                      # 10 test reports for validation
+│   ├── TR-01_cbc.html ... TR-10_mixed.html
+│
+└── scripts/                           # Utility & testing scripts
+    ├── run_real_tests.py              # Automated testing (10 reports)
+    ├── compare_expected_vs_actual.py  # Expected vs System output
+    ├── generate_real_graphs.py        # Graph generation for blackbook
     ├── create_jargon_json.py          # Generates medical_jargon.json
     ├── fine_tune_lab_reports.py        # BART model fine-tuning script
     ├── fine_tune_lab_summarizer.py     # Training data generator
-    ├── lab_reports_dataset.csv         # Training dataset (report/summary pairs)
-    └── translate_glossary_to_corpus.py # Batch Hindi/Marathi translation utility
+    ├── generate_training_data.py      # Creates training pairs
+    ├── lab_reports_dataset.csv         # Training dataset
+    └── translate_glossary_to_corpus.py # Batch translation utility
 ```
 
 ---
@@ -178,14 +193,48 @@ The app will open at `http://localhost:8501`
 ## 📸 How to Use
 
 1. Open the app in your browser (`streamlit run main.py`)
-2. Select your preferred language (English / Hindi / Marathi)
-3. Upload a lab report file (PDF, JPG, PNG, or TXT)
-4. Click **Analyze**
-5. View the patient-friendly report with:
-   - Extracted parameters with Normal/High/Low status
-   - Simple explanations for each medical term
-   - AI-generated overall summary
-6. Download the report as a text file
+2. Upload a lab report file (PDF, JPG, PNG, or TXT)
+3. Click **Analyze**
+4. View the patient-friendly report with:
+   - Quick Summary (abnormal count)
+   - Patient-Friendly explanation of each parameter
+   - AI-generated detailed summary with health impacts
+   - Hindi and Marathi translations (shown automatically)
+5. Download the report as a text file
+
+---
+
+## 📈 Test Results & Performance
+
+Tested on **10 real lab reports** (64 parameters total) covering CBC, Lipid, KFT, LFT, Thyroid, Diabetes, Electrolytes, Vitamins, CBC+ESR, and Mixed panels.
+
+| Metric | Score |
+|--------|-------|
+| **Precision** | 98.4% |
+| **Recall** | 93.8% |
+| **F1 Score** | 96.0% |
+| **Classification Accuracy** | 97.5% |
+
+### Per Report Type Performance
+| Report Type | Precision | Recall |
+|-------------|-----------|--------|
+| CBC | 100% | 100% |
+| KFT | 100% | 100% |
+| Thyroid | 100% | 100% |
+| Electrolytes | 100% | 100% |
+| CBC+ESR (Text) | 100% | 100% |
+| LFT | 100% | 88% |
+| Diabetes | 100% | 100% |
+| Mixed Panel | 100% | 90% |
+| Lipid Profile | 100% | 80% |
+| Vitamin Panel | 67% | 67% |
+
+Run tests yourself:
+```bash
+python scripts/run_real_tests.py
+python scripts/compare_expected_vs_actual.py
+python scripts/generate_real_graphs.py
+```
 
 ---
 
