@@ -10,7 +10,8 @@ import matplotlib
 matplotlib.use('Agg')
 import numpy as np
 
-RESULTS_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "results")
+PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+RESULTS_DIR = os.path.join(PROJECT_ROOT, "results")
 
 # Load real results
 df = pd.read_csv(os.path.join(RESULTS_DIR, "real_test_results.csv"))

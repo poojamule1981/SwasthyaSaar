@@ -13,11 +13,12 @@ import re
 import pandas as pd
 import numpy as np
 
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, PROJECT_ROOT)
 
-DATA_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data")
-TEST_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "test_reports")
-RESULTS_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "results")
+DATA_DIR = os.path.join(PROJECT_ROOT, "data")
+TEST_DIR = os.path.join(PROJECT_ROOT, "test_reports")
+RESULTS_DIR = os.path.join(PROJECT_ROOT, "results")
 
 os.makedirs(RESULTS_DIR, exist_ok=True)
 

@@ -1,10 +1,10 @@
 {
   "total_reports": 10,
   "total_expected": 64,
-  "total_detected": 58,
-  "total_correct": 57,
-  "overall_precision": 0.9828,
-  "overall_recall": 0.8906,
-  "overall_f1": 0.9344,
-  "avg_classification_accuracy": 0.974
+  "total_detected": 61,
+  "total_correct": 60,
+  "overall_precision": 0.9836,
+  "overall_recall": 0.9375,
+  "overall_f1": 0.96,
+  "avg_classification_accuracy": 0.975
 }

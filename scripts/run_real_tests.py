@@ -27,13 +27,14 @@ sys.modules['streamlit'] = st_mock
 import importlib.util
 
 # Load main.py functions manually
-spec = importlib.util.spec_from_file_location("main_module", os.path.join(os.path.dirname(__file__), "main.py"))
+spec = importlib.util.spec_from_file_location("main_module", os.path.join(os.path.dirname(__file__), "..", "main.py"))
 
 # Actually, let's just replicate the core functions we need
 # Load reference ranges
-DATA_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data")
-TEST_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "test_reports")
-RESULTS_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "results")
+PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+DATA_DIR = os.path.join(PROJECT_ROOT, "data")
+TEST_DIR = os.path.join(PROJECT_ROOT, "test_reports")
+RESULTS_DIR = os.path.join(PROJECT_ROOT, "results")
 
 os.makedirs(TEST_DIR, exist_ok=True)
 os.makedirs(RESULTS_DIR, exist_ok=True)
@@ -388,7 +389,7 @@ def main():
     
     # We need extract_text and extract_parameters from main.py
     # Let's load them by reading main.py and extracting functions
-    main_path = os.path.join(os.path.dirname(__file__), "main.py")
+    main_path = os.path.join(PROJECT_ROOT, "main.py")
     with open(main_path, "r", encoding="utf-8") as f:
         main_code = f.read()
     
