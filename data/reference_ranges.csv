@@ -1,13 +1,13 @@
 parameter,low,high,unit,synonyms
 # Hematology
-hemoglobin,12,16,g/dL,hb;haemoglobin;hgb
-hematocrit,36,46,%,pcv;haematocrit;pcv(haematocrit)
-wbc count,4000,11000,/µL,white blood cells;wbccount;wbc;total wbc count;total leucocyte count;tlc;total wbc
-platelet count,1.5,4.5,lakhs/cumm,platelets;plateletcount;plt;platelet
-rbc count,4.5,6.0,mill/µL,red blood cells;rbccount;rbc;total rbc count
-mcv,80,100,fL,mean corpuscular volume
-mch,27,32,pg,mean corpuscular hemoglobin
-mchc,32,36,g/dL,mean corpuscular hemoglobin concentration
+hemoglobin,12,16,g/dL,hb;haemoglobin;hgb;hemoglobin hb
+hematocrit,36,46,%,pcv;haematocrit;pcv(haematocrit);packed cell volume;packed cell volume hct;hct;hematocrit pcv
+wbc count,4000,11000,/µL,white blood cells;wbccount;wbc;total wbc count;total leucocyte count;tlc;total wbc;wbc count total leucocyte count
+platelet count,150000,450000,cells/cumm,platelets;plateletcount;plt;platelet;thrombocytes;platelet count thrombocytes
+rbc count,4.5,6.0,mill/µL,red blood cells;rbccount;rbc;total rbc count;r.b.c. count;rbc count
+mcv,80,100,fL,mean corpuscular volume;mean cell volume;mean cell volume mcv
+mch,27,32,pg,mean corpuscular hemoglobin;mean cell hemoglobin;mean cell hemoglobin mch;mean corpuscular hb
+mchc,32,36,g/dL,mean corpuscular hemoglobin concentration;mean cell hb conc;mean cell hb conc mchc;mean corp hb concentration;mean corpuscular hb concentration
 neutrophils,35,70,%,neutrophil;neutrophil count;polymorphs;polymorph
 lymphocytes,20,40,%,lymphocyte;lymphocyte count
 eosinophils,1,8,%,eosinophil;eosinophil count
@@ -16,14 +16,14 @@ basophils,0,1,%,basophil;basophil count
 esr,0,20,mm/hr,erythrocyte sedimentation rate
 crp,0,5,mg/L,c-reactive protein
 reticulocyte count,0.5,1.5,%,retic count
-rdw,11.5,14.5,%,red cell distribution width
+rdw,11.5,14.5,%,red cell distribution width;rdw cv;rdw-cv;red cell distribution width rdw cv
 mpv,7.5,11.5,fL,mean platelet volume
-pct,0.15,0.4,%,plateletcrit
+pct,0.15,0.4,%,plateletcrit;platelet crit;pct (platelet crit)
 pdw,10,17.9,%,platelet distribution width
-absolute neutrophil count,2000,7000,/µL,anc
-absolute lymphocyte count,1000,3000,/µL,alc
-absolute eosinophil count,40,440,/µL,aec
-absolute monocyte count,200,800,/µL,amc
+absolute neutrophil count,2000,7000,/µL,anc;absolute neutrophils count
+absolute lymphocyte count,1000,3000,/µL,alc;absolute lymphocytes count
+absolute eosinophil count,40,440,/µL,aec;absolute eosinophils count
+absolute monocyte count,200,800,/µL,amc;absolute monocytes count
 peripheral smear,0,1,presence,blood smear;ps
 
 # Urine Examination
@@ -66,11 +66,11 @@ microalbumin,0,30,mg/L,urine microalbumin
 creatinine clearance,90,120,mL/min,ccr
 
 # Liver Function
-bilirubin total,0.2,1.2,mg/dL,total bilirubin
-bilirubin direct,0,0.3,mg/dL,conjugated bilirubin;direct bilirubin
-bilirubin indirect,0.2,0.9,mg/dL,unconjugated bilirubin;indirect bilirubin
-sgpt,0,40,U/L,alt;serum sgpt;sgpt(alt)
-sgot,0,40,U/L,ast;serum sgot;sgot(ast)
+bilirubin total,0.2,1.2,mg/dL,total bilirubin;bilirubin (total)
+bilirubin direct,0,0.3,mg/dL,conjugated bilirubin;direct bilirubin;bilirubin (direct)
+bilirubin indirect,0.2,0.9,mg/dL,unconjugated bilirubin;indirect bilirubin;bilirubin (indirect)
+sgpt,0,40,U/L,alt;serum sgpt;sgpt(alt);alanine aminotransferase;alt/sgpt;alt sgpt
+sgot,0,40,U/L,ast;serum sgot;sgot(ast);aspartate aminotransferase;ast/sgot;ast sgot
 alkaline phosphatase,44,147,U/L,alp
 gamma gt,9,48,U/L,ggt
 total protein,6.4,8.3,g/dL,total proteins;serum total proteins;serum total protein
@@ -111,7 +111,7 @@ lipoprotein a,0,30,mg/dL,lp(a);lpa
 glucose fasting,70,100,mg/dL,fbs
 glucose pp,70,140,mg/dL,ppbs
 hba1c,4,6,%,glycated hemoglobin
-glucose random,70,140,mg/dL,random blood sugar;rbs;glucose blood random;random blood glucose;blood sugar random;blood glucose random
+glucose random,70,140,mg/dL,random blood sugar;rbs;glucose blood random;random blood glucose;blood sugar random;blood glucose random;glucose-random
 fructosamine,205,285,µmol/L,
 c-peptide,0.8,3.1,ng/mL,c peptide
 gad antibodies,0,5,IU/mL,gad65 antibody

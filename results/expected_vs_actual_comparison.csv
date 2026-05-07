@@ -1,0 +1,65 @@
+Report,Report Type,Parameter,Expected Value,System Value,Value Match,Expected Status,System Status,Status Match
+TR-01,CBC,hemoglobin,9.8,9.8,True,Low,Low,True
+TR-01,CBC,rbc count,3.42,3.42,True,Low,Low,True
+TR-01,CBC,hematocrit,30.2,30.2,True,Low,Low,True
+TR-01,CBC,mcv,88.3,88.3,True,Normal,Normal,True
+TR-01,CBC,mch,28.6,28.6,True,Normal,Normal,True
+TR-01,CBC,mchc,32.4,32.4,True,Normal,Normal,True
+TR-01,CBC,wbc count,7800.0,7800.0,True,Normal,Normal,True
+TR-01,CBC,platelet count,245000.0,245000.0,True,Normal,Normal,True
+TR-01,CBC,neutrophils,62.0,62.0,True,Normal,Normal,True
+TR-01,CBC,lymphocytes,30.0,30.0,True,Normal,Normal,True
+TR-01,CBC,eosinophils,3.0,3.0,True,Normal,Normal,True
+TR-01,CBC,monocytes,4.0,4.0,True,Normal,Normal,True
+TR-01,CBC,basophils,1.0,1.0,True,Normal,Normal,True
+TR-01,CBC,rdw,14.5,14.5,True,Normal,Normal,True
+TR-01,CBC,mpv,9.8,9.8,True,Normal,Normal,True
+TR-02,Lipid,cholesterol,185.0,NOT FOUND,False,Normal,—,False
+TR-02,Lipid,triglycerides,140.0,140.0,True,Normal,Normal,True
+TR-02,Lipid,hdl,52.0,52.0,True,Normal,Normal,True
+TR-02,Lipid,ldl,105.0,105.0,True,Normal,Normal,True
+TR-02,Lipid,vldl,28.0,28.0,True,Normal,Normal,True
+TR-03,KFT,urea,45.0,45.0,True,High,Normal,False
+TR-03,KFT,creatinine,1.8,1.8,True,High,High,True
+TR-03,KFT,uric acid,7.5,7.5,True,High,High,True
+TR-03,KFT,calcium,9.2,9.2,True,Normal,Normal,True
+TR-03,KFT,sodium,140.0,140.0,True,Normal,Normal,True
+TR-03,KFT,potassium,4.5,4.5,True,Normal,Normal,True
+TR-03,KFT,chloride,102.0,102.0,True,Normal,Normal,True
+TR-04,LFT,bilirubin total,2.5,2.5,True,High,High,True
+TR-04,LFT,bilirubin direct,0.8,0.8,True,High,High,True
+TR-04,LFT,sgpt,68.0,68.0,True,High,High,True
+TR-04,LFT,sgot,55.0,55.0,True,High,High,True
+TR-04,LFT,alkaline phosphatase,95.0,95.0,True,Normal,Normal,True
+TR-04,LFT,total protein,7.2,7.2,True,Normal,Normal,True
+TR-04,LFT,albumin,4.0,NOT FOUND,False,Normal,—,False
+TR-04,LFT,globulin,3.2,3.2,True,Normal,Normal,True
+TR-05,Thyroid,tsh,8.5,8.5,True,High,High,True
+TR-05,Thyroid,t3,0.9,0.9,True,Low,Low,True
+TR-05,Thyroid,t4,4.5,4.5,True,Low,Low,True
+TR-06,Diabetes,blood sugar fasting,135.0,NOT FOUND,False,High,—,False
+TR-06,Diabetes,blood sugar pp,210.0,NOT FOUND,False,High,—,False
+TR-06,Diabetes,hba1c,7.8,7.8,True,High,High,True
+TR-07,Electrolytes,sodium,128.0,128.0,True,Low,Low,True
+TR-07,Electrolytes,potassium,5.8,5.8,True,High,High,True
+TR-07,Electrolytes,chloride,95.0,95.0,True,Low,Low,True
+TR-07,Electrolytes,calcium,8.0,8.0,True,Low,Low,True
+TR-08,Vitamin,iron,35.0,35.0,True,Low,Low,True
+TR-08,Vitamin,vitamin d,12.0,25.0,False,Low,Low,True
+TR-08,Vitamin,vitamin b12,180.0,180.0,True,Low,Low,True
+TR-09,CBC+ESR,hemoglobin,14.2,14.2,True,Normal,Normal,True
+TR-09,CBC+ESR,wbc count,12500.0,12500.0,True,High,High,True
+TR-09,CBC+ESR,platelet count,180000.0,180000.0,True,Normal,Normal,True
+TR-09,CBC+ESR,esr,35.0,35.0,True,High,High,True
+TR-09,CBC+ESR,neutrophils,75.0,75.0,True,High,High,True
+TR-09,CBC+ESR,lymphocytes,18.0,18.0,True,Low,Low,True
+TR-10,Mixed,hemoglobin,11.5,11.5,True,Normal,Low,False
+TR-10,Mixed,wbc count,6200.0,6200.0,True,Normal,Normal,True
+TR-10,Mixed,platelet count,220000.0,220000.0,True,Normal,Normal,True
+TR-10,Mixed,creatinine,1.5,1.5,True,High,High,True
+TR-10,Mixed,urea,50.0,50.0,True,High,High,True
+TR-10,Mixed,blood sugar fasting,110.0,NOT FOUND,False,High,—,False
+TR-10,Mixed,sodium,138.0,138.0,True,Normal,Normal,True
+TR-10,Mixed,potassium,4.2,4.2,True,Normal,Normal,True
+TR-10,Mixed,hba1c,6.2,6.2,True,High,High,True
+TR-10,Mixed,cholesterol,220.0,NOT FOUND,False,High,—,False

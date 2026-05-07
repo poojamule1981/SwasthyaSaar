@@ -100,7 +100,6 @@ def load_glossary():
         st.warning(f"Failed to load glossary: {e}")
     return glossary
 
-@st.cache_data
 def load_reference_ranges():
     """Load reference ranges and build section-to-parameter mapping from # comments."""
     fname = find_file("reference_ranges.csv")
@@ -316,21 +315,164 @@ def expand_abbreviations_for_summary(text, param_map):
 
 #Generate AI summary
 # -------------------------------
+@st.cache_data
+def simplify_meaning(param, raw_meaning):
+    """Clean a medical definition into short plain English."""
+    if not raw_meaning or len(raw_meaning.strip()) < 5:
+        return ""
+    
+    # Take first meaningful clause only
+    s = raw_meaning.split(";")[0].strip()
+    # Remove param name echo (e.g., "hemoglobin is protein that..." → "protein that...")
+    s = re.sub(rf"^{re.escape(param)}\s*(is|are|means?|[-–:])\s*", "", s, flags=re.I)
+    # Remove leading articles
+    s = re.sub(r"^(a |an |the )", "", s, flags=re.I)
+    # Take only first comma-clause if still too long
+    if len(s) > 60:
+        s = s.split(",")[0].strip()
+    if len(s) > 60:
+        s = s[:60].rsplit(" ", 1)[0]
+    
+    # Now use BART to further simplify if the meaning is still complex
+    if len(s) > 30 and any(w in s.lower() for w in ["concentration", "metabolism", "morphology", "pathology", "serum", "enzyme"]):
+        try:
+            prompt = f"Simplify for patient: {s}"
+            out = summarizer(prompt, max_length=20, min_length=5, do_sample=False)
+            simplified = out[0]["summary_text"].strip()
+            # Only use if it's actually shorter and different
+            if simplified and len(simplified) < len(s) and simplified.lower() != s.lower():
+                s = simplified
+        except Exception:
+            pass
+    
+    return s.lower().rstrip(".")
+
+
+def get_simple_explanation(param):
+    """Get a simple explanation for a parameter."""
+    meta = param_meta.get(param, {})
+    raw_meaning = meta.get("meaning", "")
+    if not raw_meaning:
+        return ""
+    return simplify_meaning(param, raw_meaning)
+
+
+def _get_health_impact(param, status, raw_meaning):
+    """Generate a health impact message based on param category."""
+    # Categorize by keywords in meaning/param name
+    param_lower = param.lower()
+    meaning_lower = (raw_meaning or "").lower()
+    combined = param_lower + " " + meaning_lower
+    
+    if status == "Low":
+        if any(w in combined for w in ["oxygen", "hemoglobin", "rbc", "red blood", "hematocrit"]):
+            return "you may feel tired, weak, or short of breath"
+        elif any(w in combined for w in ["white blood", "wbc", "neutrophil", "lymphocyte", "immune"]):
+            return "your body may have trouble fighting infections"
+        elif any(w in combined for w in ["platelet", "clot", "bleeding"]):
+            return "you may bruise or bleed more easily"
+        elif any(w in combined for w in ["iron", "ferritin"]):
+            return "you may feel exhausted or look pale"
+        elif any(w in combined for w in ["vitamin d", "calcium", "bone"]):
+            return "your bones may become weak over time"
+        elif any(w in combined for w in ["vitamin b12", "b12"]):
+            return "you may feel numbness, tiredness, or memory issues"
+        elif any(w in combined for w in ["potassium"]):
+            return "you may feel muscle weakness or irregular heartbeat"
+        elif any(w in combined for w in ["sodium"]):
+            return "you may feel dizzy, confused, or nauseous"
+        elif any(w in combined for w in ["protein", "albumin"]):
+            return "may indicate nutrition or liver issues"
+        elif any(w in combined for w in ["thyroid", "tsh", "t3", "t4"]):
+            return "your metabolism and energy levels may be affected"
+        else:
+            return "this is below the healthy range — ask your doctor about it"
+    else:  # High
+        if any(w in combined for w in ["white blood", "wbc", "neutrophil"]):
+            return "your body may be fighting an infection"
+        elif any(w in combined for w in ["eosinophil", "allerg", "parasit"]):
+            return "you may have allergies or a parasitic infection"
+        elif any(w in combined for w in ["cholesterol", "ldl", "triglyceride", "fat"]):
+            return "higher risk of heart problems over time"
+        elif any(w in combined for w in ["sugar", "glucose", "hba1c", "diabetes"]):
+            return "may indicate diabetes or pre-diabetes"
+        elif any(w in combined for w in ["creatinine", "kidney", "urea", "bun", "egfr"]):
+            return "your kidneys may need attention"
+        elif any(w in combined for w in ["liver", "sgpt", "sgot", "bilirubin", "alt", "ast"]):
+            return "your liver may be under stress"
+        elif any(w in combined for w in ["thyroid", "tsh"]):
+            return "your thyroid may not be working properly"
+        elif any(w in combined for w in ["uric acid", "gout"]):
+            return "risk of gout (painful joints)"
+        elif any(w in combined for w in ["potassium"]):
+            return "could affect your heart rhythm"
+        elif any(w in combined for w in ["sodium"]):
+            return "may cause swelling or high blood pressure"
+        elif any(w in combined for w in ["platelet", "clot"]):
+            return "your blood may clot too easily"
+        elif any(w in combined for w in ["esr", "crp", "inflam"]):
+            return "there may be inflammation in your body"
+        elif any(w in combined for w in ["red blood", "rbc", "hematocrit"]):
+            return "your blood may be too thick — stay hydrated"
+        elif any(w in combined for w in ["basophil"]):
+            return "may indicate an allergic reaction or inflammation"
+        else:
+            return "this is above the healthy range — ask your doctor about it"
+
+
 def generate_ai_summary(results, param_map):
     if not results:
         return "No valid parameters found."
 
-    # build base text
-    base = " ".join([f"{r['parameter'].capitalize()}: {r['value']} {r['unit']} ({r['status']})." for r in results])
-    expanded = expand_abbreviations_for_summary(base, param_map)
+    total = len(results)
+    normal_count = sum(1 for r in results if r.get("status") == "Normal")
+    concern_count = total - normal_count
 
-    # summarize using cached pipeline
-    try:
-        out = summarizer(expanded, max_length=120, min_length=30, do_sample=False)
-        return out[0]["summary_text"]
-    except Exception:
-        # fallback: return expanded text if summarization fails
-        return expanded
+    if concern_count == 0:
+        return (f"Great news! All {total} test results are within the healthy range. "
+                f"Your body seems to be working well. Keep up your healthy habits!")
+
+    # Build patient-friendly explanation for each abnormal result
+    lines = []
+    lines.append(f"Your report checked **{total}** things in your blood. "
+                 f"**{normal_count}** are perfectly fine. "
+                 f"However, **{concern_count}** need your doctor's attention:")
+    lines.append("")  # blank line before list
+
+    for r in results:
+        param = r.get("parameter", "")
+        value = r.get("value", "")
+        unit = r.get("unit", "")
+        status = r.get("status", "Normal")
+        if status == "Normal":
+            continue
+
+        # Get simple explanation
+        simple = get_simple_explanation(param)
+        
+        # Get health impact (smart category-based)
+        meta = param_meta.get(param, {})
+        raw_meaning = meta.get("meaning", "")
+        impact = _get_health_impact(param, status, raw_meaning)
+
+        param_display = param.upper()
+        status_icon = "🔴" if status == "High" else "🟡"
+        status_word = "High" if status == "High" else "Low"
+        
+        if simple:
+            lines.append(f"{status_icon} **{param_display}** ({simple})")
+        else:
+            lines.append(f"{status_icon} **{param_display}**")
+        lines.append(f"- Value: **{value} {unit}** — **{status_word}**")
+        lines.append(f"- What this means: {impact}")
+        lines.append("")  # blank line between items
+
+    lines.append("---")
+    lines.append(f"✅ The other **{normal_count}** results are all healthy.")
+    lines.append("")
+    lines.append("👨‍⚕️ **Please share this report with your doctor for proper guidance.**")
+
+    return "\n".join(lines)
 
 
 
@@ -426,6 +568,28 @@ def extract_text(file_path):
                 page_t = pytesseract.image_to_string(processed, config="--psm 6")
                 page_texts.append(page_t.rstrip())
             text = "\n\n".join(page_texts)
+        elif file_path.lower().endswith(".txt"):
+            with open(file_path, "r", encoding="utf-8", errors="ignore") as f:
+                text = f.read()
+        elif file_path.lower().endswith((".html", ".htm")):
+            with open(file_path, "r", encoding="utf-8", errors="ignore") as f:
+                html_content = f.read()
+            # Strip style/script blocks
+            text = re.sub(r'<style[^>]*>.*?</style>', '', html_content, flags=re.DOTALL|re.IGNORECASE)
+            text = re.sub(r'<script[^>]*>.*?</script>', '', text, flags=re.DOTALL|re.IGNORECASE)
+            # Insert newlines at block-level element boundaries (tr, div, p, br, li, h1-h6, table)
+            text = re.sub(r'<(?:tr|div|p|br|li|h[1-6]|table|/tr|/table)[^>]*>', '\n', text, flags=re.IGNORECASE)
+            # Replace td/th with tab to preserve column separation on same row
+            text = re.sub(r'<(?:td|th)[^>]*>', '\t', text, flags=re.IGNORECASE)
+            # Remove remaining HTML tags
+            text = re.sub(r'<[^>]+>', ' ', text)
+            # Decode HTML entities
+            text = re.sub(r'&nbsp;|&#xa0;|&#160;', ' ', text, flags=re.IGNORECASE)
+            text = re.sub(r'&[a-zA-Z]+;', ' ', text)
+            text = re.sub(r'&#\d+;', ' ', text)
+            # Collapse spaces (but keep tabs and newlines)
+            text = re.sub(r'[ ]+', ' ', text)
+            text = re.sub(r'\t', '  ', text)  # convert tabs to double-space
         else:
             img = Image.open(file_path)
             processed = preprocess_image(img)
@@ -458,11 +622,14 @@ def normalize_value(value_str, param=None):
         s = str(value_str).strip()
         if not s:
             return None
-        # Handle comma: thousands separator (e.g., "9,000") vs decimal (e.g., "1,5")
-        # If comma is followed by exactly 3 digits, treat as thousands separator (remove it)
-        # Otherwise treat as decimal point
-        s = re.sub(r',(\d{3})(?!\d)', r'\1', s)  # "9,000" -> "9000", "16,700" -> "16700"
-        s = s.replace(",", ".")  # remaining commas are decimal: "1,5" -> "1.5"
+        # Handle comma: thousands separator (e.g., "9,000", "2,28,000") vs decimal (e.g., "1,5")
+        # If ALL commas are followed by 2-3 digits (Indian or Western format), treat as thousands separators
+        if re.match(r'^\d{1,3}(,\d{2,3})+$', s):
+            # Pure comma-separated number (Indian: 2,28,000 or Western: 228,000)
+            s = s.replace(",", "")
+        else:
+            s = re.sub(r',(\d{3})(?!\d)', r'\1', s)  # "9,000" -> "9000", "16,700" -> "16700"
+            s = s.replace(",", ".")  # remaining commas are decimal: "1,5" -> "1.5"
 
         # quick date-like rejection: tokens with two dashes or slashes and 3-4 digit year
         if re.search(r"\d{1,2}[-/]\d{1,2}[-/]\d{2,4}", s) or re.search(r"\d{4}[-/]\d{1,2}[-/]\d{1,2}", s):
@@ -518,10 +685,12 @@ def normalize_value(value_str, param=None):
                 # Use 100x to allow legitimately high pathological values (e.g., CRP 267 with range 0-5)
                 if "%" not in unit and val > 100 * max(1.0, high):
                     return None
-                # OCR decimal-drop correction: if value far exceeds range but value/10 fits,
-                # assume OCR dropped the decimal point (e.g., "3.9" read as "39")
-                if val > high * 3 and val / 10 >= low and val / 10 <= high:
-                    val = val / 10
+                # OCR decimal-drop correction: if value far exceeds range but value/10, /100, or /1000 fits,
+                # assume OCR dropped the decimal point (e.g., "3.9" read as "39", "3.42" read as "342")
+                for divisor in [10, 100, 1000]:
+                    if val > high * 3 and val / divisor >= low * 0.5 and val / divisor <= high * 2:
+                        val = val / divisor
+                        break
 
         return val
     except Exception:
@@ -535,6 +704,10 @@ import json
 def detect_report_type(text):
     """Detect report type(s) by matching section names and their parameter synonyms from reference_ranges.csv"""
     text_lower = text.lower()
+    # Normalize OCR artifacts: remove dashes, parentheses, extra spaces for better matching
+    text_normalized = re.sub(r'[()/:;,]', ' ', text_lower)
+    text_normalized = re.sub(r'\s*-\s*', ' ', text_normalized)
+    text_normalized = re.sub(r'\s+', ' ', text_normalized)
     scores = {}
     
     for section_name, params in section_map.items():
@@ -542,20 +715,22 @@ def detect_report_type(text):
         # Check if section name keywords appear in the text
         section_words = section_name.split()
         for word in section_words:
-            if len(word) > 2 and word in text_lower:
+            if len(word) > 2 and word in text_normalized:
                 score += 2
         
         # Check how many parameters/synonyms from this section appear in text
         for param in params:
-            if param in text_lower:
+            param_normalized = re.sub(r'\s*-\s*', ' ', param)
+            if param_normalized in text_normalized or param in text_lower:
                 score += 1
             details = reference_ranges.get(param, {})
             for syn in details.get("synonyms", []):
-                if syn in text_lower:
+                syn_normalized = re.sub(r'\s*-\s*', ' ', syn)
+                if syn_normalized in text_normalized or syn in text_lower:
                     score += 1
                     break
         
-        if score >= 3:
+        if score >= 2:
             scores[section_name] = score
     
     if not scores:
@@ -579,15 +754,17 @@ def extract_parameters(text, reference_ranges, fuzzy=False, fuzz_threshold=90, c
     """
     results = []
     seen_params = set()
-    line_claimed = {}  # li -> max matched candidate length (prevents short synonym false matches)
     
-    # Detect report type(s) and get allowed parameters
+    # Debug log
+    _debug_log = []
+    
+    # Detect report type(s) for urine-specific logic only
     detected_types = detect_report_type(text)
-    allowed_params = get_allowed_params(detected_types)
     is_urine = any("urine" in dt for dt in detected_types)
     
     # split into lines for local matching
     lines = [line.strip() for line in text.splitlines() if line.strip()]
+    _debug_log.append(f"Lines: {len(lines)}, detected_types: {detected_types}")
 
     # Pre-process: normalize lines by inserting spaces before uppercase letters in
     # concatenated words (e.g., WBCCOUNT -> WBC COUNT, RBCCOUNT -> RBC COUNT)
@@ -599,14 +776,31 @@ def extract_parameters(text, reference_ranges, fuzzy=False, fuzz_threshold=90, c
         normalized = re.sub(r'([A-Z]+)(COUNT|CRIT|PHILS|CYTES)', r'\1 \2', normalized)
         lines_normalized.append(normalized)
 
+    # Pre-compute aggressively normalized lines (strip dashes, parentheses, slashes, colons, periods, extra spaces)
+    lines_cleaned = []
+    for line in lines:
+        cleaned = line.lower()
+        # Remove periods between single letters (R.B.C. -> RBC, H.C.T. -> HCT, E.S.R. -> ESR)
+        cleaned = re.sub(r'(?<![a-z0-9])([a-z])\.([a-z])\.([a-z])\.?(?![a-z0-9])', r'\1\2\3', cleaned)
+        cleaned = re.sub(r'(?<![a-z0-9])([a-z])\.([a-z])\.?(?![a-z0-9])', r'\1\2', cleaned)
+        # Remove parenthetical abbreviations — keep both the full name and abbreviation
+        # e.g. "packed cell volume (hct)" → "packed cell volume hct"
+        cleaned = re.sub(r'[()/:;,\-]', ' ', cleaned)
+        cleaned = re.sub(r'\s+', ' ', cleaned).strip()
+        lines_cleaned.append(cleaned)
+
     for li, line in enumerate(lines):
         line_lower = line.lower()
         # Also check the normalized version
         norm_lower = lines_normalized[li].lower()
+        cleaned_lower = lines_cleaned[li]
+        
+        # Log lines that contain key CBC terms
+        if any(kw in line_lower for kw in ['rbc','mcv','mch','wbc','neutro','lymph','platelet','mpv','hemoglobin','hematocrit','rdw','eosino','mono','baso']):
+            _debug_log.append(f"[{li}] LINE: {line[:80]}")
+        
         for param, details in reference_ranges.items():
             if param in seen_params:
-                continue
-            if allowed_params is not None and param not in allowed_params:
                 continue
 
             candidates = [param] + details.get("synonyms", [])
@@ -618,37 +812,56 @@ def extract_parameters(text, reference_ranges, fuzzy=False, fuzz_threshold=90, c
                 # Skip very short candidates (1-2 chars) — too many false positives
                 if len(cand_lower) < 3:
                     continue
-                # exact word match in this line (try both original and normalized)
+                # Aggressively cleaned candidate (strip dashes, parentheses, slashes, etc.)
+                cand_cleaned = re.sub(r'[()/:;,\-]', ' ', cand_lower)
+                cand_cleaned = re.sub(r'\s+', ' ', cand_cleaned).strip()
+                cand_nospace = cand_lower.replace(" ", "").replace("-", "")
+
+                # Try matching in order: original, normalized, cleaned (aggressive), nospace
                 match_in_original = re.search(rf"\b{re.escape(cand_lower)}\b", line_lower)
                 match_in_normalized = re.search(rf"\b{re.escape(cand_lower)}\b", norm_lower)
-                # Also try matching without spaces (OCR may remove spaces)
-                cand_nospace = cand_lower.replace(" ", "")
-                match_nospace = re.search(rf"\b{re.escape(cand_nospace)}\b", line_lower) if " " in cand_lower else None
-                # Also try matching with / replaced by space or removed (e.g. A/G RATIO)
-                line_slashfix = line_lower.replace("/", " ").replace("  ", " ")
-                cand_slashfix = cand_lower.replace("/", " ").replace("  ", " ")
-                match_slashfix = re.search(rf"\b{re.escape(cand_slashfix)}\b", line_slashfix) if "/" in cand_lower or "/" in line_lower else None
-                # Also try matching with dashes removed (e.g. "Glucose - Blood - Random" -> "Glucose Blood Random")
-                line_dashfix = re.sub(r'\s*-\s*', ' ', line_lower).replace("  ", " ").strip()
-                cand_dashfix = re.sub(r'\s*-\s*', ' ', cand_lower).replace("  ", " ").strip()
-                match_dashfix = re.search(rf"\b{re.escape(cand_dashfix)}\b", line_dashfix) if "-" in line_lower or "-" in cand_lower else None
+                match_cleaned = re.search(rf"\b{re.escape(cand_cleaned)}\b", cleaned_lower) if cand_cleaned != cand_lower else None
+                match_nospace = re.search(rf"\b{re.escape(cand_nospace)}\b", line_lower.replace(" ", "")) if " " in cand_lower or "-" in cand_lower else None
 
-                if match_in_original or match_in_normalized or match_nospace or match_slashfix or match_dashfix:
+                if match_in_original or match_in_normalized or match_cleaned or match_nospace:
                     matched = True
-                    # find the first occurrence position (prefer original)
-                    m_word = match_in_original or match_nospace or match_in_normalized or match_slashfix or match_dashfix
-                    search_line = line if (match_in_original or match_nospace) else lines_normalized[li]
-                    start = m_word.start()
-                    # create a substring window around the match (same line)
-                    left = max(0, start - char_window)
-                    right = min(len(search_line), start + len(cand_lower) + char_window)
-                    window = search_line[left:right]
+                    # Determine which line variant matched and get position
+                    if match_in_original:
+                        m_word = match_in_original
+                        search_line = line
+                    elif match_in_normalized:
+                        m_word = match_in_normalized
+                        search_line = lines_normalized[li]
+                    elif match_cleaned:
+                        m_word = match_cleaned
+                        search_line = lines_cleaned[li]
+                    else:
+                        m_word = match_nospace
+                        # Use the nospace version of the line so positions align
+                        search_line = line_lower.replace(" ", "")
 
-                    # search for numeric pattern inside window
-                    m_val = re.search(r"([<>≤≥]?\s*\d+[.,]?\d*(?:\s*-\s*\d+[.,]?\d*)?)", window)
+                    # Search for value AFTER the parameter name (not before) to avoid picking up wrong numbers
+                    end_of_match = m_word.end()
+                    right = min(len(search_line), end_of_match + char_window + 20)
+                    window = search_line[end_of_match:right]
+
+                    # search for numeric pattern inside window (supports Indian number format like 2,28,000)
+                    m_val = re.search(r"([<>≤≥]?\s*\d[\d,]*\.?\d*(?:\s*-\s*\d[\d,]*\.?\d*)?)", window)
                     if m_val:
                         candidate_val = m_val.group(1)
                         val = normalize_value(candidate_val, param)
+                    
+                    # Multi-line fallback: if no value on same line, check next 2 lines
+                    # (OCR of tabular PDFs sometimes puts param names and values on separate lines)
+                    if val is None:
+                        for offset in range(1, 3):
+                            if li + offset < len(lines):
+                                next_line = lines[li + offset]
+                                m_next = re.search(r"^\s*([<>≤≥]?\s*\d[\d,]*\.?\d*)\s*", next_line)
+                                if m_next:
+                                    val = normalize_value(m_next.group(1), param)
+                                    if val is not None:
+                                        break
                     break
 
                 # fuzzy match option: compare candidate to the line (partial)
@@ -663,18 +876,11 @@ def extract_parameters(text, reference_ranges, fuzzy=False, fuzz_threshold=90, c
                         left = max(0, idx - char_window)
                         right = min(len(line), idx + len(cand_lower) + char_window)
                         window = line[left:right]
-                        m_val = re.search(r"([<>≤≥]?\s*\d+[.,]?\d*(?:\s*-\s*\d+[.,]?\d*)?)", window)
+                        m_val = re.search(r"([<>≤≥]?\s*\d[\d,]*\.?\d*(?:\s*-\s*\d[\d,]*\.?\d*)?)", window)
                         if m_val:
                             candidate_val = m_val.group(1)
                             val = normalize_value(candidate_val, param)
                         break
-
-            if matched:
-                # Prevent short synonym false matches (e.g., "blood" matching "Red Blood Cells")
-                matched_cand_len = len(cand_lower) if cand_lower else 0
-                existing_len = line_claimed.get(li, 0)
-                if existing_len > matched_cand_len:
-                    continue  # skip: a longer synonym already matched on this line
 
             if matched and val is not None:
                 low, high = details.get("low"), details.get("high")
@@ -683,6 +889,7 @@ def extract_parameters(text, reference_ranges, fuzzy=False, fuzz_threshold=90, c
                     status = "Low"
                 elif high is not None and val > high:
                     status = "High"
+                _debug_log.append(f"  MATCH: {param}={val} ({status}) via '{cand_lower}' on line {li}")
 
                 results.append({
                     "parameter": param,
@@ -692,10 +899,12 @@ def extract_parameters(text, reference_ranges, fuzzy=False, fuzz_threshold=90, c
                     "line_index": li
                 })
                 seen_params.add(param)
-                line_claimed[li] = max(existing_len, matched_cand_len)
+            
+            elif matched and val is None:
+                _debug_log.append(f"  NO-VAL: {param} matched '{cand_lower}' on line {li} but val=None")
             
             # Handle qualitative results (Present/Absent/Positive/Negative/Nil/Trace)
-            elif matched and val is None and is_urine:
+            if matched and val is None and is_urine:
                 qual_match = re.search(
                     r"(present\s*\([+]+\)|present|absent|positive|negative|nil|trace|s[\.\s]*turbid)",
                     line_lower
@@ -719,8 +928,17 @@ def extract_parameters(text, reference_ranges, fuzzy=False, fuzz_threshold=90, c
                         "line_index": li
                     })
                     seen_params.add(param)
-                    line_claimed[li] = max(existing_len, matched_cand_len)
 
+    # Write debug log
+    _debug_log.append(f"Total results: {len(results)}")
+    for r in results:
+        _debug_log.append(f"  {r['parameter']} = {r['value']} ({r['status']})")
+    try:
+        with open("_extraction_debug.log", "w", encoding="utf-8") as f:
+            f.write("\n".join(_debug_log))
+    except:
+        pass
+    
     return results
 
 # Build patient-friendly markdown (English) from results
@@ -739,7 +957,8 @@ def build_patient_markdown(results, lang="en"):
         p = r["parameter"]
         meta = param_meta.get(p, {"full_form": p.upper(), "meaning": "", "marathi": "", "hindi": ""})
         full = meta["full_form"]
-        meaning = meta["meaning"] or "Meaning not available in dataset; consult your clinician."
+        # Use BART model to simplify meaning into plain English
+        meaning = get_simple_explanation(p) or meta["meaning"] or "Meaning not available."
         marathi_name = meta.get("marathi", "")
         hindi_name = meta.get("hindi", "")
         emoji = STATUS_EMOJI.get(r["status"], "ℹ️")
@@ -848,25 +1067,30 @@ def build_short_summary(results):
     if not results:
         return "No test results detected."
 
-    categories = {"Normal": [], "High": [], "Low": [], "Abnormal": []}
-    for r in results:
-        status = r.get("status", "Normal")
-        param = r.get("parameter", "").upper()
-        categories[status].append(param)
+    total = len(results)
+    high_count = sum(1 for r in results if r.get("status") == "High")
+    low_count = sum(1 for r in results if r.get("status") == "Low")
+    abnormal_count = sum(1 for r in results if r.get("status") == "Abnormal")
+    normal_count = total - high_count - low_count - abnormal_count
+    concern_count = high_count + low_count + abnormal_count
 
-    # Build summary string
+    if concern_count == 0:
+        return f"✅ All {total} test results are normal. No health concerns found."
+
     parts = []
-    for cat in ["Normal", "High", "Low", "Abnormal"]:
-        if categories[cat]:
-            names = ", ".join(categories[cat])
-            parts.append(f"{cat}: {names} ({len(categories[cat])})")
+    if low_count > 0:
+        parts.append(f"{low_count} low")
+    if high_count > 0:
+        parts.append(f"{high_count} high")
+    if abnormal_count > 0:
+        parts.append(f"{abnormal_count} abnormal")
 
-    summary_text = " | ".join(parts)
-    return summary_text
+    concern_text = ", ".join(parts)
+    return f"⚠️ {concern_count} out of {total} results need attention ({concern_text}). {normal_count} results are normal. Please consult your doctor for the abnormal values."
 
 # File uploader
 
-uploaded_file = st.file_uploader("📂 Upload your medical report", type=["pdf","png","jpg","jpeg","txt"])
+uploaded_file = st.file_uploader("📂 Upload your medical report", type=["pdf","png","jpg","jpeg","txt","html","htm"])
 
 if uploaded_file:
     suffix = os.path.splitext(uploaded_file.name)[1]
@@ -880,9 +1104,12 @@ if uploaded_file:
         if debug_opt:
             st.subheader("🔍 Raw OCR text")
             st.text_area("OCR Text", raw_text, height=300)
+            st.write(f"Text length: {len(raw_text)} chars, Lines: {len(raw_text.splitlines())}")
 
         # Extract parameters
         params = extract_parameters(raw_text, reference_ranges, fuzzy=False)
+        if debug_opt:
+            st.write(f"Extraction result: {len(params)} params found (fuzzy=False)")
         if not params:
             params = extract_parameters(raw_text, reference_ranges, fuzzy=True, fuzz_threshold=85)
         param_to_full = {p: v["full_form"] for p, v in param_meta.items()}
@@ -890,26 +1117,25 @@ if uploaded_file:
 
 
 
-        st.subheader("📊 Extracted Parameters")
-        if params:
+        if not params:
+            st.warning("No parameters detected.")
+        else:
+            st.subheader("📊 Extracted Parameters")
             df = pd.DataFrame(params)
             df_display = df[["parameter","value","unit","status"]].rename(columns={
                 "parameter": "Parameter",
                 "value": "Value",
                 "unit": "Unit",
                 "status": "Status",
-               
             })
             st.dataframe(df_display, use_container_width=True)
-        else:
-            st.warning("No parameters detected.")
 
-            
+        # Short summary at top (quick overview)
+        short_summary = build_short_summary(params)
+        st.subheader("📝 Quick Summary")
+        st.markdown(f"**{short_summary}**")
 
-        st.subheader("💡 AI-Generated Summary")
-        st.markdown(ai_summary, unsafe_allow_html=True)
-
-        # Detailed patient summary
+        # Detailed patient-friendly breakdown
         lang_code = "en" if language=="English" else ("hi" if language=="Hindi" else "mr")
         patient_md = build_patient_markdown(params, lang=lang_code)
         translated_summary = translate_with_fallback(patient_md, lang_code)
@@ -917,17 +1143,19 @@ if uploaded_file:
         st.subheader("💬 Patient-Friendly Summary")
         st.markdown(translated_summary, unsafe_allow_html=True)
 
-        # Short summary
-        short_summary = build_short_summary(params)
-        translated_short_summary = translate_with_fallback(short_summary, lang_code)
-        st.markdown("📝 Short Summary")
-        st.markdown(translated_short_summary, unsafe_allow_html=True)
+        # AI Summary at bottom (most important, detailed explanation)
+        st.subheader("💡 AI-Generated Summary")
+        st.markdown(ai_summary, unsafe_allow_html=True)
 
+        # Always show Hindi and Marathi translations below English
+        st.markdown("---")
+        st.subheader("🇮🇳 Hindi Summary (हिंदी)")
+        hindi_ai = translate_with_fallback(ai_summary, "hi")
+        st.markdown(hindi_ai, unsafe_allow_html=True)
 
-
-
-        st.subheader("📝 Short Summary")
-        st.markdown(f"**{translated_short_summary }**")
+        st.subheader("🇮🇳 Marathi Summary (मराठी)")
+        marathi_ai = translate_with_fallback(ai_summary, "mr")
+        st.markdown(marathi_ai, unsafe_allow_html=True)
 
         st.download_button(
             "📥 Download Patient Summary",
